@@ -78,20 +78,59 @@ class App {
       }
     }
 
-    // スマホ端末検出時: 初期表示を「2Dのみ」にし、間取り図全体を画面中央に綺麗にフィット
-    if (window.innerWidth <= 768) {
+    // スマホ環境の自動検出 ＆ 初期適用
+    const savedMobilePref = localStorage.getItem("home_layout_mobile_mode");
+    const shouldBeMobile = savedMobilePref !== null
+      ? savedMobilePref === "true"
+      : this.isMobileEnvironment();
+
+    this.setMobileMode(shouldBeMobile);
+
+    // ウィンドウリサイズ・画面回転時に自動フィット
+    window.addEventListener("resize", () => {
+      if (this.isMobileMode || this.isMobileEnvironment()) {
+        this.canvas2d.fitToScreen();
+      }
+    });
+  }
+
+  /**
+   * モバイル・スマホ端末かどうかの判定 (UserAgent / 画面幅 / タッチ対応)
+   */
+  isMobileEnvironment() {
+    const ua = navigator.userAgent || "";
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const isSmallScreen = window.innerWidth <= 960 || (window.screen && window.screen.width <= 960);
+    const isTouch = navigator.maxTouchPoints > 0;
+    return isMobileUA || (isTouch && isSmallScreen) || window.innerWidth <= 840;
+  }
+
+  /**
+   * スマホ最適化モードのON/OFF切り替え
+   */
+  setMobileMode(enabled) {
+    this.isMobileMode = enabled;
+    document.body.classList.toggle("mobile-mode", enabled);
+
+    const btn = document.getElementById("btn-toggle-mobile-mode");
+    if (btn) {
+      btn.classList.toggle("active", enabled);
+      const textSpan = btn.querySelector(".mode-text");
+      const iconSpan = btn.querySelector(".mode-icon");
+      if (textSpan) textSpan.textContent = enabled ? "PC表示に戻す" : "スマホ2D表示";
+      if (iconSpan) iconSpan.textContent = enabled ? "💻" : "📱";
+    }
+
+    if (enabled) {
       this.setViewMode("2d");
       setTimeout(() => {
         this.canvas2d.fitToScreen();
       }, 150);
+    } else {
+      this.setViewMode("split");
     }
 
-    // ウィンドウリサイズ・画面回転時に自動フィット
-    window.addEventListener("resize", () => {
-      if (window.innerWidth <= 768) {
-        this.canvas2d.fitToScreen();
-      }
-    });
+    localStorage.setItem("home_layout_mobile_mode", enabled ? "true" : "false");
   }
 
   /**
@@ -769,6 +808,19 @@ class App {
       window.addEventListener("click", (e) => {
         if (!headerActions.contains(e.target) && e.target !== btnMenuToggle) {
           headerActions.classList.remove("open");
+        }
+      });
+    }
+
+    // 6. 「📱 スマホ2D表示 / 💻 PC表示」切り替えボタン
+    const btnToggleMobile = document.getElementById("btn-toggle-mobile-mode");
+    if (btnToggleMobile) {
+      btnToggleMobile.addEventListener("click", () => {
+        this.setMobileMode(!this.isMobileMode);
+        if (this.isMobileMode) {
+          this.showToast("📱 スマホ向け2D全画面表示に切り替えました");
+        } else {
+          this.showToast("💻 PC向け2D+3D分割表示に戻しました");
         }
       });
     }

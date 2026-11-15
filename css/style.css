@@ -940,6 +940,35 @@ body {
   display: none;
 }
 
+/* スマホ/2D集中表示 切替トグルボタン */
+.btn-mobile-mode-switch {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border-color: #34d399;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-mobile-mode-switch:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  transform: translateY(-1px);
+}
+
+.btn-mobile-mode-switch.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #60a5fa;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
 .btn-close-drawer {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -966,10 +995,10 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   スマートフォン画面向け (幅 768px 以下)
+   スマートフォン画面向け (幅 960px 以下 または body.mobile-mode)
    2D間取り配置をスマホ全画面で直感的に操作できる専用レイアウト
    -------------------------------------------------------------------------- */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   body {
     height: 100dvh;
     overflow: hidden;
@@ -1240,4 +1269,44 @@ body {
   .drawer-backdrop.hidden {
     display: none !important;
   }
+}
+
+/* body.mobile-mode 強制適用時 (PCでもスマホUIを強制テスト・利用可能) */
+body.mobile-mode .split-gutter {
+  display: none !important;
+}
+
+body.mobile-mode .workspace-layout.mode-split .viewport-2d {
+  width: 100% !important;
+  height: 100% !important;
+}
+body.mobile-mode .workspace-layout.mode-split .viewport-3d {
+  display: none;
+}
+
+body.mobile-mode .sidebar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 72vh;
+  border-radius: 20px 20px 0 0;
+  border-right: none;
+  border-top: 1px solid var(--accent);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 60;
+  transform: translateY(105%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.mobile-mode .sidebar.open {
+  transform: translateY(0);
+}
+body.mobile-mode .sidebar-drawer-handle {
+  display: flex;
+}
+body.mobile-mode .mobile-fab-container {
+  display: flex;
+}
+body.mobile-mode .drawer-backdrop {
+  display: block;
 }
