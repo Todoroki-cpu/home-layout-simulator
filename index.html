@@ -51,8 +51,8 @@
       </button>
     </div>
 
-    <!-- アクションボタン -->
-    <div class="header-actions">
+    <!-- アクションボタン (PCでは横並び、スマホではメニューボタンから展開) -->
+    <div class="header-actions" id="header-actions">
       <button id="btn-share-url" class="btn btn-share" title="現在の家具配置を含んだ共有URLを発行（別のブラウザやスマホですぐ開けます）">🔗 URL共有</button>
       <button id="btn-open-gallery" class="btn" title="内装の実写真を確認">🖼️ 実写真</button>
       <button id="btn-reset-preset" class="btn" title="おすすめの初期家具配置に戻す">🔄 おすすめ配置</button>
@@ -61,13 +61,27 @@
       <button id="btn-import-json" class="btn" title="JSON読込">📂 読込</button>
       <input type="file" id="file-import-json" accept=".json" style="display: none;" />
     </div>
+
+    <!-- スマホ専用メニュー開閉ボタン -->
+    <button id="btn-mobile-menu-toggle" class="btn-mobile-toggle" title="その他のメニュー">
+      <span>⋮</span>
+    </button>
   </header>
 
   <!-- アプリメイン領域 -->
   <div class="app-body">
 
-    <!-- 左サイドバー: カタログ ＆ プロパティ -->
-    <aside class="sidebar">
+    <!-- 左サイドバー: カタログ ＆ プロパティ (スマホでは下から引き出すボトムシート) -->
+    <aside class="sidebar" id="app-sidebar">
+      <!-- スマホ用ドロワーヘッダー -->
+      <div class="sidebar-drawer-handle" id="sidebar-drawer-handle">
+        <div class="drawer-pill"></div>
+        <div class="drawer-title-bar">
+          <span>🛋️ 家具カタログから選ぶ</span>
+          <button id="btn-close-sidebar" class="btn-close-drawer">✕ 閉じる</button>
+        </div>
+      </div>
+
       <!-- カテゴリタブ -->
       <div class="catalog-tabs">
         <button class="cat-tab active" data-category="all">すべて</button>
@@ -87,6 +101,7 @@
       <div id="property-panel" class="property-panel hidden">
         <div class="prop-title">
           <span>選択中家具の編集</span>
+          <button id="btn-close-prop" class="btn-close-drawer" title="編集を完了">✕ 閉じる</button>
         </div>
 
         <div class="prop-group">
@@ -146,16 +161,25 @@
         <!-- 2D下部コントロールバー -->
         <div class="viewport-controls-bar">
           <label title="実際の間取り図画像(floorplan.jpg)を下敷きとして透過表示">
-            <span>間取り図下絵:</span>
-            <input type="range" id="bg-opacity-slider" min="0" max="1" step="0.05" value="0.25" style="width: 80px;" />
+            <span>下絵:</span>
+            <input type="range" id="bg-opacity-slider" min="0" max="1" step="0.05" value="0.25" style="width: 70px;" />
           </label>
           <label title="5cm単位でグリッドにスナップ">
             <input type="checkbox" id="snap-toggle" />
-            <span>5cmグリッド吸着</span>
+            <span>吸着</span>
           </label>
-          <span style="color: var(--text-muted);">ホイール: 拡大縮小 | 右ドラッグ: 画面移動</span>
+          <button id="btn-fit-screen" class="btn-fit-desktop" title="画面中央に全体収める">📐 フィット</button>
+        </div>
+
+        <!-- スマホ専用フローティングボタン群 (FAB) -->
+        <div class="mobile-fab-container">
+          <button id="btn-mobile-fit" class="fab-btn fab-fit" title="間取り図全体を画面中央に収める">📐 全体表示</button>
+          <button id="btn-mobile-add" class="fab-btn fab-add" title="家具カタログを開いて追加">＋ 家具追加</button>
         </div>
       </div>
+
+      <!-- スマホ用ドロワー開閉時バックドロップ -->
+      <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
 
       <!-- 2D / 3D 横幅リサイズスプリッターバー -->
       <div id="split-gutter" class="split-gutter" title="左右にドラッグして2D/3Dの横幅比率を変更（ダブルクリックで50:50にリセット）">

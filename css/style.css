@@ -918,3 +918,326 @@ body {
   opacity: 0;
   transform: translateX(-50%) translateY(20px);
 }
+
+/* ==========================================================================
+   スマホ・レスポンシブ対応スタイル (Mobile Optimization)
+   ========================================================================== */
+
+/* デスクトップ用UI要素のデフォルト設定 */
+.btn-mobile-toggle {
+  display: none;
+}
+
+.sidebar-drawer-handle {
+  display: none;
+}
+
+.mobile-fab-container {
+  display: none;
+}
+
+.drawer-backdrop {
+  display: none;
+}
+
+.btn-close-drawer {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-fit-desktop {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+.btn-fit-desktop:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   スマートフォン画面向け (幅 768px 以下)
+   2D間取り配置をスマホ全画面で直感的に操作できる専用レイアウト
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ヘッダーのコンパクト化 */
+  .app-header {
+    height: 48px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 13px;
+    gap: 4px;
+  }
+
+  .brand-badge {
+    display: none;
+  }
+
+  /* スマホのヘッダー中央: 2D/3D切替ボタンのみシンプルに表示 */
+  .header-center {
+    margin-left: auto;
+    gap: 6px;
+  }
+
+  .camera-select-wrap {
+    display: none; /* 3D専用メニュー内または非表示 */
+  }
+
+  .btn-tour {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .btn-group button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  /* スマホのメニューボタン (⋮) */
+  .btn-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-main);
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  /* ヘッダーアクション群 (スマホ時は右上のポップアップメニューに) */
+  .header-actions {
+    display: none;
+    position: absolute;
+    top: 48px;
+    right: 8px;
+    background: rgba(30, 34, 43, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    z-index: 100;
+    min-width: 170px;
+  }
+
+  .header-actions.open {
+    display: flex;
+  }
+
+  .header-actions .btn {
+    justify-content: flex-start;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* メインレイアウト */
+  .app-body {
+    height: calc(100dvh - 48px);
+    flex-direction: column;
+  }
+
+  /* スマホではスプリッターバーを非表示 */
+  .split-gutter {
+    display: none !important;
+  }
+
+  /* 2D / 3D ワークスペースを全画面化 */
+  .workspace-layout {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .workspace-layout.mode-split .viewport-2d {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .workspace-layout.mode-split .viewport-3d {
+    display: none;
+  }
+
+  .workspace-layout.mode-2d .viewport-2d {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .workspace-layout.mode-3d .viewport-3d {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* 2Dキャンバス */
+  #canvas-2d {
+    touch-action: none;
+  }
+
+  .viewport-header-badge {
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .viewport-controls-bar {
+    bottom: 8px;
+    left: 8px;
+    font-size: 10px;
+    padding: 4px 8px;
+    gap: 8px;
+    max-width: 55%;
+  }
+
+  /* サイドバー (家具カタログ) のボトムシート化 */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 72vh;
+    border-radius: 20px 20px 0 0;
+    border-right: none;
+    border-top: 1px solid var(--accent);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    z-index: 60;
+    transform: translateY(105%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar.open {
+    transform: translateY(0);
+  }
+
+  .sidebar-drawer-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .drawer-pill {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .drawer-title-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* 家具選択プロパティパネル (スマホでは画面下にボトムシート風表示) */
+  .property-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 60vh;
+    border-radius: 20px 20px 0 0;
+    border-top: 2px solid var(--primary);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+    z-index: 70;
+    padding: 16px;
+    background: rgba(30, 34, 43, 0.98);
+    backdrop-filter: blur(12px);
+    overflow-y: auto;
+  }
+
+  .property-panel.hidden {
+    display: none !important;
+  }
+
+  /* スマホ用フローティングボタン群 (FAB) */
+  .mobile-fab-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 25;
+  }
+
+  .fab-btn {
+    border: none;
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    touch-action: manipulation;
+    transition: transform 0.1s ease;
+  }
+
+  .fab-btn:active {
+    transform: scale(0.94);
+  }
+
+  .fab-add {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    border: 1px solid #38bdf8;
+    box-shadow: 0 4px 18px rgba(2, 132, 199, 0.5);
+  }
+
+  .fab-fit {
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 11px;
+    padding: 6px 12px;
+    align-self: flex-end;
+  }
+
+  /* ドロワー開閉時の背景タップ用バックドロップ */
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 55;
+    transition: opacity 0.2s ease;
+  }
+
+  .drawer-backdrop.hidden {
+    display: none !important;
+  }
+}

@@ -77,6 +77,54 @@ class App {
         localStorage.setItem("home_layout_simulator_scale_version", SCALE_VERSION);
       }
     }
+
+    // スマホ端末検出時: 初期表示を「2Dのみ」にし、間取り図全体を画面中央に綺麗にフィット
+    if (window.innerWidth <= 768) {
+      this.setViewMode("2d");
+      setTimeout(() => {
+        this.canvas2d.fitToScreen();
+      }, 150);
+    }
+
+    // ウィンドウリサイズ・画面回転時に自動フィット
+    window.addEventListener("resize", () => {
+      if (window.innerWidth <= 768) {
+        this.canvas2d.fitToScreen();
+      }
+    });
+  }
+
+  /**
+   * 表示モード切替 (split / 2d / 3d)
+   */
+  setViewMode(mode) {
+    document.querySelectorAll(".btn-view-mode").forEach(b => {
+      b.classList.toggle("active", b.dataset.mode === mode);
+    });
+    const main = document.getElementById("main-workspace");
+    if (main) main.className = `workspace-layout mode-${mode}`;
+    this.canvas2d.resize();
+    this.scene3d.resize();
+    if (mode === "2d") {
+      this.canvas2d.fitToScreen();
+    }
+  }
+
+  /**
+   * スマホ向けボトムドロワー (家具カタログ) の開閉
+   */
+  openMobileDrawer() {
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.getElementById("drawer-backdrop");
+    if (sidebar) sidebar.classList.add("open");
+    if (backdrop) backdrop.classList.remove("hidden");
+  }
+
+  closeMobileDrawer() {
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.getElementById("drawer-backdrop");
+    if (sidebar) sidebar.classList.remove("open");
+    if (backdrop) backdrop.classList.add("hidden");
   }
 
   /**
@@ -238,6 +286,12 @@ class App {
           color: item.color,
           modelType: item.modelType
         });
+
+        // スマホの場合はドロワーを閉じて配置した家具が見えるように
+        if (window.innerWidth <= 768) {
+          this.closeMobileDrawer();
+          this.showToast(`✨「${item.name}」を配置しました`);
+        }
       });
 
       listEl.appendChild(card);
@@ -480,13 +534,7 @@ class App {
     // 画面分割切替 (2D+3D / 2Dのみ / 3Dのみ)
     document.querySelectorAll(".btn-view-mode").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".btn-view-mode").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const mode = btn.dataset.mode;
-        const main = document.getElementById("main-workspace");
-        main.className = `workspace-layout mode-${mode}`;
-        this.canvas2d.resize();
-        this.scene3d.resize();
+        this.setViewMode(btn.dataset.mode);
       });
     });
 
@@ -651,6 +699,76 @@ class App {
         } else {
           document.execCommand("copy");
           this.showToast("📋 共有URLをコピーしました！");
+        }
+      });
+    }
+
+    // ==========================================
+    // スマホ専用UI イベントハンドラー
+    // ==========================================
+
+    // 1. スマホ右下「＋ 家具追加」FAB
+    const btnMobileAdd = document.getElementById("btn-mobile-add");
+    if (btnMobileAdd) {
+      btnMobileAdd.addEventListener("click", () => {
+        this.openMobileDrawer();
+      });
+    }
+
+    // 2. スマホ家具ドロワー閉じるボタン ＆ 背景タップ
+    const btnCloseSidebar = document.getElementById("btn-close-sidebar");
+    if (btnCloseSidebar) {
+      btnCloseSidebar.addEventListener("click", () => {
+        this.closeMobileDrawer();
+      });
+    }
+
+    const backdrop = document.getElementById("drawer-backdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", () => {
+        this.closeMobileDrawer();
+      });
+    }
+
+    // 3. スマホ「📐 全体表示」ボタン ＆ PC「📐 フィット」ボタン
+    const btnMobileFit = document.getElementById("btn-mobile-fit");
+    if (btnMobileFit) {
+      btnMobileFit.addEventListener("click", () => {
+        this.canvas2d.fitToScreen();
+        this.showToast("📐 間取り図全体を画面に収めました");
+      });
+    }
+
+    const btnFitDesktop = document.getElementById("btn-fit-screen");
+    if (btnFitDesktop) {
+      btnFitDesktop.addEventListener("click", () => {
+        this.canvas2d.fitToScreen();
+      });
+    }
+
+    // 4. プロパティパネル閉じるボタン
+    const btnCloseProp = document.getElementById("btn-close-prop");
+    if (btnCloseProp) {
+      btnCloseProp.addEventListener("click", () => {
+        this.canvas2d.selectedId = null;
+        this.canvas2d.onSelect(null);
+        this.canvas2d.render();
+      });
+    }
+
+    // 5. スマホ右上メニュー (⋮) トグル
+    const btnMenuToggle = document.getElementById("btn-mobile-menu-toggle");
+    const headerActions = document.getElementById("header-actions");
+    if (btnMenuToggle && headerActions) {
+      btnMenuToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        headerActions.classList.toggle("open");
+      });
+
+      // 画面の他をタップしたら閉じる
+      window.addEventListener("click", (e) => {
+        if (!headerActions.contains(e.target) && e.target !== btnMenuToggle) {
+          headerActions.classList.remove("open");
         }
       });
     }

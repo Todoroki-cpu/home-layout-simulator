@@ -71,6 +71,29 @@ export class Canvas2D {
   }
 
   /**
+   * スマホ画面・PC画面に合わせて間取り図全体を中央に自動フィット
+   */
+  fitToScreen() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    // 建物全体の寸法 (幅6.63m × 奥行11.73m + マージン)
+    const margin = 0.8;
+    const totalW = 6.63 + margin * 2;
+    const totalH = 11.73 + margin * 2;
+
+    const zoomX = rect.width / totalW;
+    const zoomY = rect.height / totalH;
+    this.zoom = Math.max(16, Math.min(zoomX, zoomY));
+
+    // 中央寄せパン座標の計算
+    this.panX = (rect.width - 6.63 * this.zoom) * 0.5;
+    this.panY = (rect.height - 11.73 * this.zoom) * 0.5;
+
+    this.render();
+  }
+
+  /**
    * 座標変換: メートル (m) -> キャンバスピクセル (px)
    */
   mToPx(mx, my) {
@@ -276,6 +299,161 @@ export class Canvas2D {
 
     // コンテキストメニュー抑止
     this.canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+    // ==========================================
+    // スマホ・タブレット向け マルチタッチ操作
+    // (1本指ドラッグ/移動/回転 + 2本指ピンチズーム＆パン)
+    // ==========================================
+    let isPinching = false;
+    let touchDistStart = 0;
+    let touchZoomStart = this.zoom;
+    let touchMidStart = { x: 0, y: 0 };
+    let touchMBefore = { x: 0, y: 0 };
+
+    this.canvas.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        // 1本指タッチ
+        isPinching = false;
+        const pos = getPos(e.touches[0]);
+        const mPos = this.pxToM(pos.x, pos.y);
+
+        // ルームツアーモード中のタップ
+        if (this.isTourMode) {
+          if (mPos.x >= 0.2 && mPos.x <= 6.5 && mPos.y >= 0.2 && mPos.y <= 11.5) {
+            this.onTourTeleport(mPos.x, mPos.y);
+            return;
+          }
+        }
+
+        // 回転ハンドル判定
+        if (this.selectedId) {
+          const selected = this.furnitureList.find(f => f.id === this.selectedId);
+          if (selected && this.hitTestRotateHandle(pos, selected)) {
+            this.isRotating = true;
+            this.dragStart = { ...pos };
+            this.furnitureStartPos = { ...selected };
+            e.preventDefault();
+            return;
+          }
+        }
+
+        // 家具のヒットテスト
+        let hit = null;
+        for (let i = this.furnitureList.length - 1; i >= 0; i--) {
+          const f = this.furnitureList[i];
+          if (this.hitTestFurniture(mPos, f)) {
+            hit = f;
+            break;
+          }
+        }
+
+        if (hit) {
+          this.selectedId = hit.id;
+          this.isDragging = true;
+          this.dragStart = { ...pos };
+          this.furnitureStartPos = { ...hit };
+          this.onSelect(hit);
+          e.preventDefault();
+        } else {
+          this.selectedId = null;
+          this.onSelect(null);
+          // 家具以外の場所を1本指ドラッグした場合はパン
+          this.isPanning = true;
+          this.panStart = { x: pos.x - this.panX, y: pos.y - this.panY };
+        }
+        this.render();
+
+      } else if (e.touches.length >= 2) {
+        // 2本指ピンチズーム＆パン開始
+        isPinching = true;
+        this.isDragging = false;
+        this.isRotating = false;
+        this.isPanning = false;
+
+        const t1 = getPos(e.touches[0]);
+        const t2 = getPos(e.touches[1]);
+        touchDistStart = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+        touchZoomStart = this.zoom;
+        touchMidStart = { x: (t1.x + t2.x) * 0.5, y: (t1.y + t2.y) * 0.5 };
+        touchMBefore = this.pxToM(touchMidStart.x, touchMidStart.y);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    window.addEventListener("touchmove", (e) => {
+      if (isPinching && e.touches.length >= 2) {
+        // 2本指ピンチズーム＆パン
+        e.preventDefault();
+        const t1 = getPos(e.touches[0]);
+        const t2 = getPos(e.touches[1]);
+        const dist = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+        if (touchDistStart > 0) {
+          const scale = dist / touchDistStart;
+          this.zoom = Math.max(14, Math.min(180, touchZoomStart * scale));
+
+          const curMid = { x: (t1.x + t2.x) * 0.5, y: (t1.y + t2.y) * 0.5 };
+          const pAfter = this.mToPx(touchMBefore.x, touchMBefore.y);
+          this.panX += curMid.x - pAfter.x;
+          this.panY += curMid.y - pAfter.y;
+          this.render();
+        }
+      } else if (e.touches.length === 1) {
+        const pos = getPos(e.touches[0]);
+
+        if (this.isPanning) {
+          e.preventDefault();
+          this.panX = pos.x - this.panStart.x;
+          this.panY = pos.y - this.panStart.y;
+          this.render();
+          return;
+        }
+
+        const selected = this.furnitureList.find(f => f.id === this.selectedId);
+        if (this.isDragging && selected) {
+          e.preventDefault();
+          const dxPx = pos.x - this.dragStart.x;
+          const dyPx = pos.y - this.dragStart.y;
+          let newX = this.furnitureStartPos.x + dxPx / this.zoom;
+          let newY = this.furnitureStartPos.y + dyPx / this.zoom;
+
+          if (this.snapToGrid) {
+            newX = Math.round(newX / this.gridSize) * this.gridSize;
+            newY = Math.round(newY / this.gridSize) * this.gridSize;
+          }
+
+          selected.x = Math.round(newX * 100) / 100;
+          selected.y = Math.round(newY * 100) / 100;
+          this.render();
+          this.onFurnitureChange(this.furnitureList, selected);
+          return;
+        }
+
+        if (this.isRotating && selected) {
+          e.preventDefault();
+          const centerPx = this.mToPx(selected.x, selected.y);
+          const angleRad = Math.atan2(pos.x - centerPx.x, -(pos.y - centerPx.y));
+          let deg = (angleRad * 180) / Math.PI;
+          if (deg < 0) deg += 360;
+
+          if (this.snapToGrid) {
+            deg = Math.round(deg / 15) * 15;
+          }
+
+          selected.rotation = Math.round(deg);
+          this.render();
+          this.onFurnitureChange(this.furnitureList, selected);
+        }
+      }
+    }, { passive: false });
+
+    const endTouch = () => {
+      this.isDragging = false;
+      this.isRotating = false;
+      this.isPanning = false;
+      isPinching = false;
+    };
+    window.addEventListener("touchend", endTouch);
+    window.addEventListener("touchcancel", endTouch);
   }
 
   hitTestFurniture(mPos, f) {
