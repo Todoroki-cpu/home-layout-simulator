@@ -551,6 +551,9 @@ export class Canvas2D {
   drawFixedFixtures(ctx) {
     ctx.save();
     FLOOR_PLAN.fixedFixtures.forEach(fix => {
+      // エアコン等の天井・壁面高所設備は2D家具配置平面図では非表示
+      if (fix.id.startsWith("ac_") || (fix.pos && fix.pos[2] > 1.8)) return;
+
       const pt = this.mToPx(fix.pos[0], fix.pos[1]);
       const wPx = fix.size[0] * this.zoom;
       const dPx = fix.size[1] * this.zoom;

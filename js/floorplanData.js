@@ -467,12 +467,12 @@ export const FLOOR_PLAN = {
       size: [0.75, 1.1, 0.75],
       color: "#ffffff"
     },
-    // LDKエアコン (IMG_6292: 斜め壁の上部)
+    // LDKエアコン (IMG_6292: 斜め壁の上部 - 3Dのみ壁面表示)
     {
       id: "ac_ldk",
-      name: "LDK エアコン",
-      pos: [0.65, 11.1, 2.15],
-      size: [0.32, 0.85, 0.3],
+      name: "エアコン",
+      pos: [0.72, 11.02, 2.15],
+      size: [0.26, 0.82, 0.28],
       rotation: 45,
       color: "#ffffff"
     }
