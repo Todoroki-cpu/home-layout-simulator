@@ -96,29 +96,29 @@ export class TextureGenerator {
     canvas.height = 1024;
     const ctx = canvas.getContext("2d");
 
-    // い草のベース色（若草色・い草グリーン）
-    ctx.fillStyle = "#8a9675";
+    // 実写真 IMG_6291 に基づく美しい若草色のい草ベース
+    ctx.fillStyle = "#8ea873";
     ctx.fillRect(0, 0, 512, 1024);
 
     // い草の編み目ライン (水平方向の微細なスジ)
     ctx.lineWidth = 1;
     for (let y = 0; y < 1024; y += 4) {
-      const tone = (Math.sin(y * 0.5) + Math.random() * 0.5) * 10;
-      ctx.strokeStyle = `rgba(${120 + tone}, ${135 + tone}, ${95 + tone}, 0.4)`;
+      const tone = (Math.sin(y * 0.5) + Math.random() * 0.5) * 12;
+      ctx.strokeStyle = `rgba(${125 + tone}, ${150 + tone}, ${95 + tone}, 0.5)`;
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(512, y);
       ctx.stroke();
     }
 
-    // 左右の畳縁 (縁・ヘリ: 濃いダークグリーン・幾何学模様調 - IMG_6291参照)
-    const borderW = 32;
-    ctx.fillStyle = "#2d3a2e";
+    // 左右の畳縁 (縁・ヘリ: 実写真IMG_6291の濃紺/黒茶の伝統和縁)
+    const borderW = 36;
+    ctx.fillStyle = "#1e281f";
     ctx.fillRect(0, 0, borderW, 1024);
     ctx.fillRect(512 - borderW, 0, borderW, 1024);
 
     // 縁の模様
-    ctx.strokeStyle = "#4d5f4f";
+    ctx.strokeStyle = "#4d6250";
     ctx.lineWidth = 2;
     for (let y = 0; y < 1024; y += 16) {
       ctx.strokeRect(4, y, borderW - 8, 10);
@@ -128,6 +128,7 @@ export class TextureGenerator {
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 3);
     return texture;
   }
 

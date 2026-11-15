@@ -397,9 +397,45 @@ export class Canvas2D {
       ctx.closePath();
       ctx.fill();
 
+      // 和室（畳の部屋）の場合: 伝統的な6畳間の畳割りと縁を描画
+      if (room.type === "tatami") {
+        ctx.save();
+        // 和室の範囲: x = 0.14〜3.62, y = 6.63〜9.18
+        // 6畳の畳割り (2列 × 3枚)
+        const minX = 0.14, maxX = 3.62;
+        const minY = 6.63, maxY = 9.18;
+        const tatamiW = (maxX - minX) / 2; // 1.74m
+        const tatamiH = (maxY - minY) / 3; // 0.85m
+
+        for (let col = 0; col < 2; col++) {
+          for (let row = 0; row < 3; row++) {
+            const tx = minX + col * tatamiW;
+            const ty = minY + row * tatamiH;
+            const tPt = this.mToPx(tx, ty);
+            const twPx = tatamiW * this.zoom;
+            const thPx = tatamiH * this.zoom;
+
+            // 畳表面（若草色・い草グリーン）
+            ctx.fillStyle = "#a2be88";
+            ctx.fillRect(tPt.x + 1, tPt.y + 1, twPx - 2, thPx - 2);
+
+            // 畳の縁（長辺の黒/濃緑の縁）
+            ctx.fillStyle = "#273623";
+            ctx.fillRect(tPt.x + 1, tPt.y + 1, twPx - 2, 2.5);
+            ctx.fillRect(tPt.x + 1, tPt.y + thPx - 3.5, twPx - 2, 2.5);
+
+            // 畳枠線
+            ctx.strokeStyle = "rgba(40, 55, 35, 0.45)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(tPt.x + 1, tPt.y + 1, twPx - 2, thPx - 2);
+          }
+        }
+        ctx.restore();
+      }
+
       // 部屋名ラベル
       const lpt = this.mToPx(room.labelPos[0], room.labelPos[1]);
-      ctx.fillStyle = "rgba(50, 40, 30, 0.75)";
+      ctx.fillStyle = room.type === "tatami" ? "#1e2c1a" : "rgba(50, 40, 30, 0.75)";
       ctx.font = `600 ${Math.max(10, Math.min(14, this.zoom * 0.22))}px sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(room.name, lpt.x, lpt.y);
@@ -514,18 +550,24 @@ export class Canvas2D {
       ctx.translate(pt.x, pt.y);
       if (win.direction === "W") ctx.rotate(Math.PI * 0.5);
 
-      // サッシ二重線
-      ctx.strokeStyle = "#0288d1";
-      ctx.lineWidth = 3;
+      // 窓ガラスの水色塗りつぶし (鮮やかなガラスのアクアスカイブルー)
+      ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
+      ctx.fillRect(-wPx * 0.5, -5, wPx, 10);
+
+      // ガラスのハイライト反射光
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      ctx.fillRect(-wPx * 0.45, -2, wPx * 0.9, 2);
+
+      // サッシ二重線 (シャープなアルミサッシブルー)
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(-wPx * 0.5, -4);
-      ctx.lineTo(wPx * 0.5, -4);
-      ctx.moveTo(-wPx * 0.5, 4);
-      ctx.lineTo(wPx * 0.5, 4);
+      ctx.moveTo(-wPx * 0.5, -5);
+      ctx.lineTo(wPx * 0.5, -5);
+      ctx.moveTo(-wPx * 0.5, 5);
+      ctx.lineTo(wPx * 0.5, 5);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(179, 229, 252, 0.5)";
-      ctx.fillRect(-wPx * 0.5, -4, wPx, 8);
       ctx.restore();
     });
     ctx.restore();

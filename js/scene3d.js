@@ -80,7 +80,8 @@ export class Scene3D {
       }),
       tatami: new THREE.MeshStandardMaterial({
         map: this.textures.tatami,
-        roughness: 0.7,
+        color: new THREE.Color("#98b277"), // 実写真IMG_6291の若草色・い草グリーン
+        roughness: 0.65,
         metalness: 0.0
       }),
       tile: new THREE.MeshStandardMaterial({
@@ -103,12 +104,14 @@ export class Scene3D {
         roughness: 0.5
       }),
       glass: new THREE.MeshPhysicalMaterial({
-        color: "#ffffff",
+        color: new THREE.Color("#38bdf8"), // ガラスの透明感ある水色 (Sky Blue)
         transparent: true,
-        opacity: 0.25,
-        roughness: 0.1,
-        transmission: 0.9,
-        ior: 1.5
+        opacity: 0.55,
+        roughness: 0.08,
+        metalness: 0.1,
+        transmission: 0.35,
+        ior: 1.52,
+        reflectivity: 0.85
       }),
       frame: new THREE.MeshStandardMaterial({
         color: "#374151",

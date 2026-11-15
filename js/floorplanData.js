@@ -52,7 +52,7 @@ export const FLOOR_PLAN = {
         [0.14, 9.18]
       ],
       labelPos: [1.88, 7.9],
-      color: "#dce8d2"
+      color: "#b4cca0"
     },
     {
       id: "western2",
@@ -143,15 +143,15 @@ export const FLOOR_PLAN = {
     {
       id: "washroom",
       name: "洗面脱衣室",
-      area畳: 2.5,
+      area畳: 2.2,
       type: "tile",
       polygon: [
-        [4.54, 2.63],
-        [6.50, 2.63],
+        [4.54, 3.40],
+        [6.50, 3.40],
         [6.50, 4.80],
         [4.54, 4.80]
       ],
-      labelPos: [5.52, 3.7],
+      labelPos: [5.52, 4.10],
       color: "#e2ebed"
     },
     {
@@ -250,19 +250,19 @@ export const FLOOR_PLAN = {
       door: { pos: [2.76, 5.84], width: 1.7, facing: "N", type: "folding" },
       color: "#e8dcce"
     },
-    // 5. 廊下収納 (洗面所北側: 可動棚収納 IMG_6302再現)
+    // 5. 廊下収納 (玄関ホール南・洗面所北側: 間取り図の物入 IMG_6302再現)
     {
       id: "closet_corridor",
       name: "物入",
       room: "廊下",
       polygon: [
-        [3.62, 2.63],
         [4.54, 2.63],
-        [4.54, 3.52],
-        [3.62, 3.52]
+        [5.40, 2.63],
+        [5.40, 3.40],
+        [4.54, 3.40]
       ],
-      labelPos: [4.08, 3.08],
-      door: { pos: [4.08, 2.63], width: 0.85, facing: "N", type: "folding" },
+      labelPos: [4.97, 3.01],
+      door: { pos: [4.97, 2.63], width: 0.80, facing: "N", type: "folding" },
       color: "#e8dcce"
     }
   ],
@@ -307,9 +307,7 @@ export const FLOOR_PLAN = {
     { p1: [0.0, 9.18], p2: [0.6, 9.18], type: "interior" },
     { p1: [3.0, 9.18], p2: [3.62, 9.18], type: "interior" },
 
-    // 廊下東壁 / 水回り西壁 (x = 4.54: 玄関からLDK入り口まで完全閉塞)
-    { p1: [4.54, 0.0], p2: [4.54, 1.4], type: "interior" },
-    { p1: [4.54, 1.4], p2: [4.54, 2.63], type: "interior" },
+    // 廊下東壁 / 水回り西壁 (x = 4.54: 物入・洗面・浴室・キッチンの西壁、廊下を通路として開放)
     { p1: [4.54, 2.63], p2: [4.54, 6.32], type: "interior" },
     { p1: [4.54, 6.32], p2: [4.54, 9.18], type: "interior" }, // キッチン西壁（廊下面）
 
@@ -318,7 +316,11 @@ export const FLOOR_PLAN = {
     { p1: [5.86, 0.0], p2: [5.86, 1.70], type: "interior" },  // トイレ東壁 / MB・下駄箱西壁
     { p1: [5.86, 1.15], p2: [6.63, 1.15], type: "interior" }, // MB南壁 / 下駄箱北壁
     { p1: [5.86, 1.70], p2: [6.63, 1.70], type: "interior" }, // 下駄箱南壁 / 玄関土間北壁
-    { p1: [4.54, 2.63], p2: [6.63, 2.63], type: "interior" }, // 玄関・ホール南壁 / 洗面所北壁
+
+    // 廊下物入・洗面脱衣・浴室・キッチンの横間仕切り
+    { p1: [4.54, 2.63], p2: [6.63, 2.63], type: "interior" }, // 玄関ホール南壁 / 物入・PS北壁
+    { p1: [5.40, 2.63], p2: [5.40, 3.40], type: "interior" }, // 物入東壁 / PS西壁
+    { p1: [4.54, 3.40], p2: [5.40, 3.40], type: "interior" }, // 物入南壁 / 洗面所北壁
     { p1: [4.54, 4.80], p2: [6.63, 4.80], type: "interior" }, // 洗面南/浴室北壁
     { p1: [4.54, 6.32], p2: [6.63, 6.32], type: "interior" }, // 浴室南/キッチン北壁
   ],
@@ -425,11 +427,11 @@ export const FLOOR_PLAN = {
       swing: "in",
       facing: "W"
     },
-    // 洗面所ドア (x=4.54, y=3.2, 引き戸)
+    // 洗面所ドア (x=4.54, y=3.8, 引き戸)
     {
       id: "door_washroom",
       name: "洗面所ドア",
-      pos: [4.54, 3.2],
+      pos: [4.54, 3.8],
       width: 0.75,
       type: "sliding",
       facing: "E"
@@ -491,7 +493,7 @@ export const FLOOR_PLAN = {
     {
       id: "wash_stand",
       name: "洗面化粧台",
-      pos: [6.1, 3.2, 0.9],
+      pos: [6.1, 3.8, 0.9],
       size: [0.6, 0.9, 1.8],
       color: "#5c493c"
     },
