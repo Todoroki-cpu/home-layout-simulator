@@ -870,3 +870,51 @@ body {
   border-color: #38bdf8;
   transform: scale(0.92);
 }
+
+/* ==========================================================================
+   URL共有 ＆ トースト通知 スタイル
+   ========================================================================== */
+
+/* 共有ボタン */
+.btn-share {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #ffffff;
+  border-color: #818cf8;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-share:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45);
+  transform: translateY(-1px);
+}
+
+/* トースト通知 */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  border: 1px solid #38bdf8;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.toast.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+}

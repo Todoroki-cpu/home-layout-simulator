@@ -6,6 +6,9 @@
   <title>3LDK 家具配置 2D＆3D シミュレーター</title>
   <link rel="stylesheet" href="css/style.css">
 
+  <!-- LZ-String (URL-Safe 高速圧縮ライブラリ・家具レイアウトのURL共有用) -->
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
   <!-- Three.js Import Map (モダンES Modules構成・ビルド不要でGitHub Pages即時公開可能) -->
   <script type="importmap">
     {
@@ -50,6 +53,7 @@
 
     <!-- アクションボタン -->
     <div class="header-actions">
+      <button id="btn-share-url" class="btn btn-share" title="現在の家具配置を含んだ共有URLを発行（別のブラウザやスマホですぐ開けます）">🔗 URL共有</button>
       <button id="btn-open-gallery" class="btn" title="内装の実写真を確認">🖼️ 実写真</button>
       <button id="btn-reset-preset" class="btn" title="おすすめの初期家具配置に戻す">🔄 おすすめ配置</button>
       <button id="btn-clear-all" class="btn" title="全家具を削除">🗑️ 全クリア</button>
@@ -262,6 +266,32 @@
       </div>
     </div>
   </div>
+
+  <!-- URL共有モーダル -->
+  <div id="share-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3>🔗 家具配置の共有URL</h3>
+        <button id="btn-close-share" class="modal-close-btn">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+          現在の家具配置データがこのURLにすべて含まれています。<br>
+          別のブラウザやスマートフォンでこのURLを開くだけで、全く同じ配置が自動復元されます。
+        </p>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <input type="text" id="share-url-input" readonly style="flex: 1; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 12px;" />
+          <button id="btn-copy-share-url" class="btn btn-tour" style="white-space: nowrap;">📋 コピー</button>
+        </div>
+        <div style="font-size: 11px; color: #38bdf8; background: rgba(2, 132, 199, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 10px;">
+          💡 外部サーバーには一切保存されないため、情報漏洩の心配がなく永久にプライベートで安全です。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="toast hidden"></div>
 
   <!-- アプリエントリースクリプト -->
   <script type="module" src="js/app.js"></script>

@@ -56,23 +56,128 @@ class App {
     // 7. イベントリスナー登録
     this.bindEvents();
 
-    // 7. 保存データの読込、または初期おすすめ配置の適用
-    const SCALE_VERSION = "scale_v2_20261115";
-    const savedVersion = localStorage.getItem("home_layout_simulator_scale_version");
-    const saved = localStorage.getItem("home_layout_simulator_data");
+    // 8. 保存データの読込 (URL共有ハッシュ > localStorage > おすすめ初期配置)
+    const loadedFromUrl = this.loadFromUrlHash();
+    if (!loadedFromUrl) {
+      const SCALE_VERSION = "scale_v2_20261115";
+      const savedVersion = localStorage.getItem("home_layout_simulator_scale_version");
+      const saved = localStorage.getItem("home_layout_simulator_data");
 
-    if (saved && savedVersion === SCALE_VERSION) {
-      try {
-        const parsed = JSON.parse(saved);
-        this.canvas2d.setFurniture(parsed);
-        this.scene3d.updateFurniture(parsed);
-      } catch (e) {
+      if (saved && savedVersion === SCALE_VERSION) {
+        try {
+          const parsed = JSON.parse(saved);
+          this.canvas2d.setFurniture(parsed);
+          this.scene3d.updateFurniture(parsed);
+        } catch (e) {
+          this.loadPresetFurniture();
+        }
+      } else {
+        // スケール精査後の正しい初期配置に更新
         this.loadPresetFurniture();
+        localStorage.setItem("home_layout_simulator_scale_version", SCALE_VERSION);
       }
-    } else {
-      // スケール精査後の正しい初期配置に更新
-      this.loadPresetFurniture();
-      localStorage.setItem("home_layout_simulator_scale_version", SCALE_VERSION);
+    }
+  }
+
+  /**
+   * トースト通知を表示
+   */
+  showToast(message, duration = 3500) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+    toast.innerHTML = message;
+    toast.classList.remove("hidden");
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      toast.classList.add("hidden");
+    }, duration);
+  }
+
+  /**
+   * 現在の家具配置を圧縮し、共有URLを生成
+   */
+  exportShareUrl() {
+    if (!window.LZString) {
+      alert("圧縮ライブラリをロード中です。少々お待ちください。");
+      return;
+    }
+
+    // 圧縮用ミニマム構造に変換
+    const minData = this.canvas2d.furnitureList.map(f => ({
+      t: f.type,
+      n: f.name,
+      x: Math.round(f.x * 100) / 100,
+      y: Math.round(f.y * 100) / 100,
+      r: f.rotation,
+      w: Math.round(f.width * 100) / 100,
+      d: Math.round(f.depth * 100) / 100,
+      h: Math.round(f.height * 100) / 100,
+      c: f.color,
+      m: f.modelType
+    }));
+
+    const jsonStr = JSON.stringify(minData);
+    const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+    const shareUrl = `${window.location.origin}${window.location.pathname}#layout=${compressed}`;
+
+    // クリップボードへのコピー
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        this.showToast("✅ 共有URLをクリップボードにコピーしました！<br>別のブラウザやスマホで開くとレイアウトが復元されます。");
+      }).catch(() => {});
+    }
+
+    // モーダルを表示して確実に見える化
+    const modal = document.getElementById("share-modal");
+    const input = document.getElementById("share-url-input");
+    if (modal && input) {
+      input.value = shareUrl;
+      modal.classList.remove("hidden");
+      input.select();
+    }
+  }
+
+  /**
+   * URLハッシュからの家具配置復元
+   */
+  loadFromUrlHash() {
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith("#layout=")) return false;
+
+    if (!window.LZString) return false;
+
+    try {
+      const compressed = hash.substring(8); // "#layout="の後ろ
+      const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+      if (!jsonStr) return false;
+
+      const minData = JSON.parse(jsonStr);
+      if (!Array.isArray(minData)) return false;
+
+      // 通常の家具データ形式に復元
+      const restored = minData.map((item, idx) => ({
+        id: `shared_${Date.now()}_${idx}`,
+        type: item.t,
+        name: item.n || "家具",
+        x: item.x,
+        y: item.y,
+        rotation: item.r || 0,
+        width: item.w,
+        depth: item.d,
+        height: item.h,
+        color: item.c || "#8d6e63",
+        modelType: item.m || item.t
+      }));
+
+      this.canvas2d.setFurniture(restored);
+      this.scene3d.updateFurniture(restored);
+      this.saveToLocalStorage();
+
+      this.showToast("🎉 共有URLから家具レイアウトを正常に読み込みました！", 4500);
+      return true;
+    } catch (err) {
+      console.warn("Failed to load layout from URL hash:", err);
+      return false;
     }
   }
 
@@ -517,6 +622,38 @@ class App {
     document.getElementById("btn-close-gallery").addEventListener("click", () => {
       modal.classList.add("hidden");
     });
+
+    // 🔗 URL共有ボタン ＆ モーダル
+    const btnShare = document.getElementById("btn-share-url");
+    if (btnShare) {
+      btnShare.addEventListener("click", () => {
+        this.exportShareUrl();
+      });
+    }
+
+    const shareModal = document.getElementById("share-modal");
+    const btnCloseShare = document.getElementById("btn-close-share");
+    if (btnCloseShare && shareModal) {
+      btnCloseShare.addEventListener("click", () => {
+        shareModal.classList.add("hidden");
+      });
+    }
+
+    const btnCopyShare = document.getElementById("btn-copy-share-url");
+    const shareInput = document.getElementById("share-url-input");
+    if (btnCopyShare && shareInput) {
+      btnCopyShare.addEventListener("click", () => {
+        shareInput.select();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareInput.value).then(() => {
+            this.showToast("📋 共有URLをコピーしました！");
+          });
+        } else {
+          document.execCommand("copy");
+          this.showToast("📋 共有URLをコピーしました！");
+        }
+      });
+    }
   }
 
   /**
