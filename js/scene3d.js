@@ -131,7 +131,7 @@ export class Scene3D {
   setupLighting() {
     // 半球光（空からの青白さと地面からの反射）
     const hemiLight = new THREE.HemisphereLight("#ffffff", "#f0ece1", 0.65);
-    hemiLight.position.set(2.5, 10, 5);
+    hemiLight.position.set(3.3, 12, 6.0);
     this.scene.add(hemiLight);
 
     // 環境光
@@ -140,28 +140,28 @@ export class Scene3D {
 
     // 南窓からの太陽光 (DirectionalLight)
     const sunLight = new THREE.DirectionalLight("#fff9e6", 1.25);
-    sunLight.position.set(2.5, 8.0, 14.0); // 南側上空から室内へ射し込む
-    sunLight.target.position.set(2.5, 0.5, 6.0);
+    sunLight.position.set(3.5, 10.0, 18.0); // 南側上空から室内へ射し込む
+    sunLight.target.position.set(3.5, 0.5, 9.0);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 1;
-    sunLight.shadow.camera.far = 25;
-    sunLight.shadow.camera.left = -6;
-    sunLight.shadow.camera.right = 6;
-    sunLight.shadow.camera.top = 6;
-    sunLight.shadow.camera.bottom = -6;
+    sunLight.shadow.camera.far = 30;
+    sunLight.shadow.camera.left = -8;
+    sunLight.shadow.camera.right = 8;
+    sunLight.shadow.camera.top = 8;
+    sunLight.shadow.camera.bottom = -8;
     sunLight.shadow.bias = -0.0005;
     this.scene.add(sunLight);
     this.scene.add(sunLight.target);
 
     // 廊下・キッチンのダウンライト補助光
-    const kitchenLight = new THREE.PointLight("#fffaed", 0.8, 4.5);
-    kitchenLight.position.set(4.1, 2.3, 6.2);
+    const kitchenLight = new THREE.PointLight("#fffaed", 0.8, 5.5);
+    kitchenLight.position.set(5.5, 2.3, 7.8);
     this.scene.add(kitchenLight);
 
-    const corridorLight = new THREE.PointLight("#fffaed", 0.6, 5.0);
-    corridorLight.position.set(3.04, 2.3, 3.5);
+    const corridorLight = new THREE.PointLight("#fffaed", 0.6, 6.0);
+    corridorLight.position.set(4.08, 2.3, 5.0);
     this.scene.add(corridorLight);
   }
 
@@ -265,10 +265,10 @@ export class Scene3D {
     });
 
     // 4. バルコニー手すり (南側＆西側)
-    const railingGeo = new THREE.BoxGeometry(4.5, 1.1, 0.06);
+    const railingGeo = new THREE.BoxGeometry(6.0, 1.1, 0.06);
     const railingMat = new THREE.MeshStandardMaterial({ color: "#e5e7eb", roughness: 0.4 });
     const railingSouth = new THREE.Mesh(railingGeo, railingMat);
-    railingSouth.position.set(2.7, 0.55, 10.3);
+    railingSouth.position.set(3.6, 0.55, 13.2);
     archGroup.add(railingSouth);
 
     // 5. 梁の配置 (下がり天井 - IMG_6292再現)

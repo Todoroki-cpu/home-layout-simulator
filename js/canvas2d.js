@@ -15,9 +15,9 @@ export class Canvas2D {
 
     // ビュー変換 (メートル座標 -> スクリーン座標)
     // 原点 (0,0) をキャンバスの中央上寄りに配置
-    this.zoom = 55; // 1メートルあたりのピクセル数 (px/m)
-    this.panX = 180;
-    this.panY = 60;
+    this.zoom = 42; // 1メートルあたりのピクセル数 (px/m)
+    this.panX = 140;
+    this.panY = 40;
 
     // 背景下絵画像 (floorplan.jpg)
     this.bgImage = null;
@@ -292,11 +292,11 @@ export class Canvas2D {
     if (this.showBgImage && this.bgImage) {
       ctx.save();
       ctx.globalAlpha = this.bgOpacity;
-      // 画像 (x:160, y:53) がメートル (0,0) に対応
-      const scale = 0.0185;
+      // 画像 (x:164, y:52) がメートル (0,0) に完全一致
+      const scale = 0.0255;
       const imgW = this.bgImage.width * scale * this.zoom;
       const imgH = this.bgImage.height * scale * this.zoom;
-      const imgPx = this.mToPx(-160 * scale, -53 * scale);
+      const imgPx = this.mToPx(-164 * scale, -52 * scale);
       ctx.drawImage(this.bgImage, imgPx.x, imgPx.y, imgW, imgH);
       ctx.restore();
     }

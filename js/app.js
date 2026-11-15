@@ -45,8 +45,11 @@ class App {
     this.bindEvents();
 
     // 7. 保存データの読込、または初期おすすめ配置の適用
+    const SCALE_VERSION = "scale_v2_20261115";
+    const savedVersion = localStorage.getItem("home_layout_simulator_scale_version");
     const saved = localStorage.getItem("home_layout_simulator_data");
-    if (saved) {
+
+    if (saved && savedVersion === SCALE_VERSION) {
       try {
         const parsed = JSON.parse(saved);
         this.canvas2d.setFurniture(parsed);
@@ -55,7 +58,9 @@ class App {
         this.loadPresetFurniture();
       }
     } else {
+      // スケール精査後の正しい初期配置に更新
       this.loadPresetFurniture();
+      localStorage.setItem("home_layout_simulator_scale_version", SCALE_VERSION);
     }
   }
 
@@ -101,8 +106,8 @@ class App {
           this.canvas2d.canvas.height * 0.25
         );
         // LDKの中心付近をデフォルトに
-        const posX = Math.max(0.5, Math.min(4.2, viewCenter.x || 2.5));
-        const posY = Math.max(0.5, Math.min(8.2, viewCenter.y || 7.5));
+        const posX = Math.max(1.0, Math.min(5.5, viewCenter.x || 3.3));
+        const posY = Math.max(1.0, Math.min(11.0, viewCenter.y || 10.0));
 
         this.canvas2d.addFurniture({
           type: item.type,

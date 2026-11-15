@@ -209,33 +209,33 @@ export const FURNITURE_CATALOG = [
 
 /**
  * 初期配置（おすすめプリセットレイアウト）
- * LDK, 和室, 洋室にすぐに生活イメージが湧く配置を用意
+ * 実寸精査された広々とした空間に、スムーズな生活動線を考慮した配置
  */
 export const INITIAL_PRESET_FURNITURE = [
-  // LDK: ダイニングセット
+  // LDK: ダイニングセット (キッチンカウンターの脇・配膳しやすい位置)
   {
     id: "f_dining_1",
     type: "dining_set_4p",
     name: "ダイニングセット",
-    x: 2.2,
-    y: 8.1,
-    rotation: 0,
-    width: 1.35,
+    x: 4.2,
+    y: 10.2,
+    rotation: 90,
+    width: 1.4,
     depth: 0.85,
     height: 0.72,
     color: "#6d4c41",
     modelType: "diningSet"
   },
-  // LDK: 3人掛けソファ (南窓を背にせず斜め壁の開放感を活かす配置)
+  // LDK: 3人掛けソファ (リビング中央、和室や斜め窓への視界を妨げない配置)
   {
     id: "f_sofa_1",
     type: "sofa_3p",
     name: "3人掛けソファ",
-    x: 3.4,
-    y: 7.7,
+    x: 2.4,
+    y: 10.2,
     rotation: 0,
-    width: 1.85,
-    depth: 0.85,
+    width: 1.9,
+    depth: 0.88,
     height: 0.78,
     color: "#4a5568",
     modelType: "sofa"
@@ -245,11 +245,11 @@ export const INITIAL_PRESET_FURNITURE = [
     id: "f_rug_1",
     type: "living_rug",
     name: "リビングラグ",
-    x: 3.4,
-    y: 8.35,
+    x: 2.4,
+    y: 10.9,
     rotation: 0,
-    width: 1.8,
-    depth: 1.2,
+    width: 2.0,
+    depth: 1.4,
     height: 0.02,
     color: "#b0bec5",
     modelType: "rug"
@@ -259,50 +259,50 @@ export const INITIAL_PRESET_FURNITURE = [
     id: "f_table_1",
     type: "coffee_table",
     name: "リビングテーブル",
-    x: 3.4,
-    y: 8.35,
+    x: 2.4,
+    y: 10.9,
     rotation: 0,
-    width: 1.0,
-    depth: 0.5,
+    width: 1.05,
+    depth: 0.55,
     height: 0.38,
     color: "#8d6e63",
     modelType: "coffeeTable"
   },
-  // LDK: テレビボード (南東側壁沿い)
+  // LDK: テレビボード (東側壁沿い、ソファ正面)
   {
     id: "f_tv_1",
     type: "tv_board_55",
     name: "テレビボード (55型TV付)",
-    x: 4.6,
-    y: 8.2,
+    x: 0.6,
+    y: 10.0,
     rotation: 90,
-    width: 1.5,
+    width: 1.6,
     depth: 0.42,
     height: 1.15,
     color: "#3e2723",
     modelType: "tvBoard"
   },
-  // LDK: 冷蔵庫 (キッチン北奥の定位置)
+  // LDK: 冷蔵庫 (キッチン北奥の冷蔵庫置場スペース)
   {
     id: "f_fridge_1",
     type: "fridge",
     name: "大型冷蔵庫",
-    x: 3.75,
-    y: 5.65,
+    x: 5.0,
+    y: 6.8,
     rotation: 0,
     width: 0.68,
-    depth: 0.7,
-    height: 1.82,
+    depth: 0.72,
+    height: 1.83,
     color: "#f5f5f5",
     modelType: "fridge"
   },
-  // LDK: 観葉植物 (斜め窓のコーナー脇)
+  // LDK: 観葉植物 (南西の斜め窓コーナー脇・日当たり良好)
   {
     id: "f_plant_1",
     type: "indoor_plant",
     name: "観葉植物",
-    x: 0.9,
-    y: 8.4,
+    x: 1.1,
+    y: 11.2,
     rotation: 0,
     width: 0.5,
     depth: 0.5,
@@ -311,13 +311,13 @@ export const INITIAL_PRESET_FURNITURE = [
     modelType: "plant"
   },
 
-  // 和室: 座卓
+  // 和室: 座卓 (和室6畳の中央)
   {
     id: "f_zataku_1",
     type: "zataku",
     name: "座卓",
-    x: 1.35,
-    y: 6.4,
+    x: 1.88,
+    y: 7.9,
     rotation: 0,
     width: 1.1,
     depth: 0.75,
@@ -331,8 +331,8 @@ export const INITIAL_PRESET_FURNITURE = [
     id: "f_bed_1",
     type: "bed_semi_double",
     name: "セミダブルベッド",
-    x: 1.35,
-    y: 4.0,
+    x: 1.88,
+    y: 4.68,
     rotation: 90,
     width: 1.25,
     depth: 2.05,
@@ -341,16 +341,16 @@ export const INITIAL_PRESET_FURNITURE = [
     modelType: "bed"
   },
 
-  // 洗面脱衣室: 洗濯機
+  // 洗面脱衣室: 洗濯機 (洗濯機パン置場)
   {
     id: "f_washer_1",
     type: "washer",
     name: "ドラム式洗濯機",
-    x: 3.78,
-    y: 2.3,
+    x: 5.1,
+    y: 3.2,
     rotation: 0,
     width: 0.64,
-    depth: 0.66,
+    depth: 0.68,
     height: 1.05,
     color: "#ffffff",
     modelType: "washer"
