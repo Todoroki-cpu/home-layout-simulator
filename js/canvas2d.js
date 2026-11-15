@@ -37,6 +37,11 @@ export class Canvas2D {
     this.snapToGrid = false;
     this.gridSize = 0.05; // 50mm (5cm)
 
+    // ルームツアー（人目線ウォークスルー）連動状態
+    this.tourPlayer = null;
+    this.isTourMode = false;
+    this.onTourTeleport = options.onTourTeleport || (() => {});
+
     // コールバック
     this.onFurnitureChange = options.onFurnitureChange || (() => {});
     this.onSelect = options.onSelect || (() => {});
@@ -120,6 +125,12 @@ export class Canvas2D {
     this.onFurnitureChange(this.furnitureList, f);
   }
 
+  setTourPlayer(player) {
+    this.tourPlayer = player;
+    this.isTourMode = !!(player && player.active);
+    this.render();
+  }
+
   initEvents() {
     const getPos = (e) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -140,6 +151,15 @@ export class Canvas2D {
         this.panStart = { x: pos.x - this.panX, y: pos.y - this.panY };
         e.preventDefault();
         return;
+      }
+
+      // ルームツアーモード中の2Dクリックで人目線テレポート
+      if (this.isTourMode && e.button === 0) {
+        // 部屋の内外判定（外壁内ならテレポート）
+        if (mPos.x >= 0.2 && mPos.x <= 6.5 && mPos.y >= 0.2 && mPos.y <= 11.5) {
+          this.onTourTeleport(mPos.x, mPos.y);
+          return;
+        }
       }
 
       // 選択中家具の回転ハンドルをクリックしたか判定
@@ -335,6 +355,9 @@ export class Canvas2D {
         this.drawSelectedOverlay(ctx, selected);
       }
     }
+
+    // ルームツアー中の人目線位置＆視野扇形描画
+    this.drawTourPlayer(ctx);
   }
 
   drawGrid(ctx) {
@@ -516,30 +539,59 @@ export class Canvas2D {
 
       ctx.save();
       ctx.translate(pt.x, pt.y);
+
       if (door.type === "hinged") {
+        let rot = 0;
+        let arcDir = 1;
+
+        if (door.facing === "E") {
+          // 東壁外開き（玄関ドア、MB扉: 南側ヒンジ、東へ外開き）
+          rot = 0;
+          arcDir = door.swing === "out" ? 1 : -1;
+        } else if (door.facing === "N") {
+          // 南壁から北（室内）へ開く（トイレドアなど）
+          rot = -Math.PI * 0.5;
+          arcDir = 1;
+        } else if (door.facing === "W") {
+          // 東壁から西（室内）へ開く（洋室ドアなど）
+          rot = Math.PI;
+          arcDir = -1;
+        } else if (door.facing === "S") {
+          // 北壁から南（LDK内）へ開く
+          rot = Math.PI * 0.5;
+          arcDir = -1;
+        }
+
+        ctx.rotate(rot);
+
         // 開き戸の弧
-        ctx.strokeStyle = "rgba(100, 100, 100, 0.45)";
+        ctx.strokeStyle = "rgba(70, 80, 95, 0.45)";
         ctx.lineWidth = 1.5;
         ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.arc(0, 0, rPx, 0, Math.PI * 0.5);
+        if (arcDir === 1) {
+          ctx.arc(0, 0, rPx, 0, Math.PI * 0.5);
+        } else {
+          ctx.arc(0, 0, rPx, -Math.PI * 0.5, 0);
+        }
         ctx.stroke();
         ctx.setLineDash([]);
+
         // 扉線
-        ctx.strokeStyle = "#5d4037";
+        ctx.strokeStyle = "#4a3c31";
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(rPx, 0);
         ctx.stroke();
       } else if (door.type === "sliding" || door.type === "fusuma") {
-        // 引き戸
+        // 引き戸 / ふすま 2枚引き違い線
         ctx.strokeStyle = "#8d6e63";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(-rPx * 0.5, -2);
-        ctx.lineTo(0, -2);
-        ctx.moveTo(0, 2);
+        ctx.lineTo(4, -2);
+        ctx.moveTo(-4, 2);
         ctx.lineTo(rPx * 0.5, 2);
         ctx.stroke();
       }
@@ -560,20 +612,187 @@ export class Canvas2D {
 
       ctx.save();
       ctx.translate(pt.x, pt.y);
-      ctx.fillStyle = fix.color;
-      ctx.strokeStyle = "#444444";
-      ctx.lineWidth = 1.5;
-      ctx.fillRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
-      ctx.strokeRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+      if (fix.rotation) {
+        ctx.rotate((fix.rotation * Math.PI) / 180);
+      }
 
-      // ラベル
-      ctx.fillStyle = "#333333";
-      ctx.font = `500 ${Math.max(9, this.zoom * 0.16)}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fix.name.substring(0, 4), 0, 0);
+      if (fix.id === "shoes_box") {
+        // 下駄箱 (間取り図の落ち着いたベージュトーン＆木枠)
+        ctx.fillStyle = "#cfbda2";
+        ctx.strokeStyle = "#7c6853";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+        ctx.strokeRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+
+        ctx.fillStyle = "#3e2723";
+        ctx.font = `600 ${Math.max(10, this.zoom * 0.2)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("下駄箱", 0, 0);
+      } else if (fix.id === "toilet_counter") {
+        // トイレ手洗いカウンター (木目カウンター＋楕円ボウル＋水栓)
+        ctx.fillStyle = "#c8b399";
+        ctx.strokeStyle = "#6d5b45";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+        ctx.strokeRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+
+        // 手洗いボウル（左側・西寄り）
+        const bowlX = -wPx * 0.25;
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#4a5568";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(bowlX, 0, wPx * 0.16, dPx * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 水栓マーク
+        ctx.fillStyle = "#718096";
+        ctx.beginPath();
+        ctx.arc(bowlX, -dPx * 0.25, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (fix.id === "toilet_bowl") {
+        // トイレ便器 (東壁側タンク＋西向き楕円便座)
+        // ロータンク (右側・東壁側)
+        const tankW = wPx * 0.32;
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(wPx * 0.5 - tankW, -dPx * 0.45, tankW, dPx * 0.9);
+        ctx.strokeRect(wPx * 0.5 - tankW, -dPx * 0.45, tankW, dPx * 0.9);
+
+        // 便座 (左側・西向き)
+        const bowlW = wPx * 0.65;
+        ctx.beginPath();
+        ctx.ellipse(-wPx * 0.5 + bowlW * 0.5, 0, bowlW * 0.5, dPx * 0.42, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 便座の穴（内側）
+        ctx.fillStyle = "#f1f5f9";
+        ctx.beginPath();
+        ctx.ellipse(-wPx * 0.5 + bowlW * 0.48, 0, bowlW * 0.3, dPx * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (fix.id === "kitchen_system") {
+        // システムキッチン (本体＋シンク＋ガスコンロ)
+        ctx.fillStyle = "#334155";
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+        ctx.strokeRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+
+        // シンク (水色)
+        ctx.fillStyle = "#e2e8f0";
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 1.2;
+        const sinkH = dPx * 0.32;
+        ctx.fillRect(-wPx * 0.4, -dPx * 0.35, wPx * 0.8, sinkH);
+        ctx.strokeRect(-wPx * 0.4, -dPx * 0.35, wPx * 0.8, sinkH);
+
+        // ガスコンロ 3口バーナー
+        ctx.fillStyle = "#0f172a";
+        const burnerY = dPx * 0.25;
+        [-wPx * 0.2, 0, wPx * 0.2].forEach(bx => {
+          ctx.beginPath();
+          ctx.arc(bx, burnerY, Math.max(3, wPx * 0.08), 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // ラベル
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = `600 ${Math.max(10, this.zoom * 0.18)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("キッチン", 0, -dPx * 0.05);
+      } else {
+        ctx.fillStyle = fix.color;
+        ctx.strokeStyle = "#444444";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+        ctx.strokeRect(-wPx * 0.5, -dPx * 0.5, wPx, dPx);
+
+        // ラベル
+        ctx.fillStyle = "#333333";
+        ctx.font = `500 ${Math.max(9, this.zoom * 0.16)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(fix.name.substring(0, 4), 0, 0);
+      }
+
       ctx.restore();
     });
+    ctx.restore();
+  }
+
+  drawTourPlayer(ctx) {
+    if (!this.tourPlayer || !this.tourPlayer.active) return;
+    const { x, z, yaw } = this.tourPlayer;
+    const pt = this.mToPx(x, z);
+
+    ctx.save();
+    ctx.translate(pt.x, pt.y);
+
+    // Three.js の yaw (0は北 -Y, 時計回り)
+    // 2D Canvasの角度: 0は東(+X), 時計回り
+    // yaw=0 のとき北 (-Y) を向くように変換
+    const angle = yaw - Math.PI * 0.5;
+
+    // 1. 視野コーン (FOV 70度)
+    const fov = (70 * Math.PI) / 180;
+    const coneRadius = 3.5 * this.zoom; // 約3.5mの視線扇形
+
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, coneRadius);
+    grad.addColorStop(0, "rgba(2, 132, 199, 0.45)");
+    grad.addColorStop(0.7, "rgba(2, 132, 199, 0.12)");
+    grad.addColorStop(1, "rgba(2, 132, 199, 0.0)");
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, coneRadius, angle - fov * 0.5, angle + fov * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // 視野境界線
+    ctx.strokeStyle = "rgba(2, 132, 199, 0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 2. プレイヤー位置アイコン
+    ctx.fillStyle = "rgba(2, 132, 199, 0.25)";
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#0284c7";
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 視線方向マーカー
+    ctx.fillStyle = "#0284c7";
+    ctx.beginPath();
+    const tipX = Math.cos(angle) * 14;
+    const tipY = Math.sin(angle) * 14;
+    ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ラベル
+    ctx.fillStyle = "#0369a1";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("現在地", 0, -18);
+
     ctx.restore();
   }
 

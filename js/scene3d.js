@@ -9,7 +9,7 @@ import { TextureGenerator } from "./proceduralTextures.js";
 import { FurnitureModelFactory } from "./proceduralModels.js";
 
 export class Scene3D {
-  constructor(containerElement) {
+  constructor(containerElement, options = {}) {
     this.container = containerElement;
 
     // Three.js 基本オブジェクト
@@ -39,6 +39,20 @@ export class Scene3D {
     this.controls.maxPolarAngle = Math.PI * 0.49; // 床下には潜らない
     this.controls.minDistance = 0.5;
     this.controls.maxDistance = 25;
+
+    // ルームツアー（人目線ウォークスルー）状態
+    this.isTourMode = false;
+    this.tourPosition = new THREE.Vector3(5.4, 1.55, 2.15); // 初期位置: 玄関ホール
+    this.tourYaw = Math.PI * 0.5; // 水平視線角 (初期は西向き)
+    this.tourPitch = 0; // 垂直見下ろし/見上げ角
+    this.tourKeys = { forward: false, backward: false, left: false, right: false };
+    this.onTourMove = options.onTourMove || (() => {});
+    this.savedCameraState = null;
+    this.lastTime = performance.now();
+    this.isPointerDown = false;
+    this.lastPointer = { x: 0, y: 0 };
+
+    this.initTourPointerEvents();
 
     // 初期カメラ位置 (全体俯瞰)
     this.applyCameraPreset(FLOOR_PLAN.cameraPresets[0]);
@@ -435,6 +449,88 @@ export class Scene3D {
         );
         hood.position.set(0, 1.95, fix.size[1] * 0.25);
         mesh.add(hood);
+      } else if (fix.id === "shoes_box") {
+        // 下駄箱 / シューズボックス (トール木目キャビネット＋中央飾りカウンター)
+        mesh = new THREE.Group();
+        const woodMat = new THREE.MeshStandardMaterial({ color: "#3e2e23", roughness: 0.5 });
+        const counterMat = new THREE.MeshStandardMaterial({ color: "#6b513d", roughness: 0.3 });
+
+        // 下台
+        const lowerH = 0.85;
+        const lower = new THREE.Mesh(new THREE.BoxGeometry(fix.size[0], lowerH, fix.size[1]), woodMat);
+        lower.position.set(0, lowerH * 0.5, 0);
+        lower.castShadow = true;
+        mesh.add(lower);
+
+        // カウンター天板
+        const cTop = new THREE.Mesh(new THREE.BoxGeometry(fix.size[0] * 1.02, 0.03, fix.size[1] * 1.02), counterMat);
+        cTop.position.set(0, lowerH + 0.015, 0);
+        mesh.add(cTop);
+
+        // 吊り戸棚 (上部)
+        const upperH = 0.9;
+        const upper = new THREE.Mesh(new THREE.BoxGeometry(fix.size[0], upperH, fix.size[1]), woodMat);
+        upper.position.set(0, 2.2 - upperH * 0.5, 0);
+        upper.castShadow = true;
+        mesh.add(upper);
+      } else if (fix.id === "toilet_counter") {
+        // トイレ手洗いカウンター (木目下台＋人造大理石天板＋手洗いボウル＋鏡)
+        mesh = new THREE.Group();
+        const cWoodMat = new THREE.MeshStandardMaterial({ color: "#4a382a", roughness: 0.4 });
+        const cTopMat = new THREE.MeshStandardMaterial({ color: "#f8f9fa", roughness: 0.2 });
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: "#dbeafe", roughness: 0.1, metalness: 0.8 });
+        const faucetMat = new THREE.MeshStandardMaterial({ color: "#e2e8f0", roughness: 0.2, metalness: 0.85 });
+
+        // カウンター下台
+        const cBase = new THREE.Mesh(new THREE.BoxGeometry(fix.size[0], fix.size[2], fix.size[1]), cWoodMat);
+        cBase.position.set(0, fix.size[2] * 0.5, 0);
+        cBase.castShadow = true;
+        mesh.add(cBase);
+
+        // カウンター天板
+        const cTop = new THREE.Mesh(new THREE.BoxGeometry(fix.size[0] * 1.02, 0.03, fix.size[1] * 1.02), cTopMat);
+        cTop.position.set(0, fix.size[2] + 0.015, 0);
+        mesh.add(cTop);
+
+        // 手洗いボウル（左側・西寄り）
+        const bowl = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.16, 0.14, 0.10, 24),
+          new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.15 })
+        );
+        bowl.position.set(-fix.size[0] * 0.25, fix.size[2] + 0.05, 0);
+        bowl.castShadow = true;
+        mesh.add(bowl);
+
+        // 立水栓
+        const faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 12), faucetMat);
+        faucet.position.set(-fix.size[0] * 0.25, fix.size[2] + 0.14, -fix.size[1] * 0.28);
+        mesh.add(faucet);
+
+        // ウォールミラー
+        const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.70, 0.02), mirrorMat);
+        mirror.position.set(-fix.size[0] * 0.25, 1.45, -fix.size[1] * 0.48);
+        mesh.add(mirror);
+      } else if (fix.id === "toilet_bowl") {
+        // トイレ便器 (ロータンク＋便座本体)
+        mesh = new THREE.Group();
+        const whiteCeramic = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.15 });
+
+        // 便器ベース（下部）
+        const bowlBase = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.40, 0.65), whiteCeramic);
+        bowlBase.position.set(0, 0.20, 0);
+        bowlBase.castShadow = true;
+        mesh.add(bowlBase);
+
+        // ロータンク (背面側)
+        const tank = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.22), whiteCeramic);
+        tank.position.set(0, 0.58, 0.22);
+        tank.castShadow = true;
+        mesh.add(tank);
+
+        // 便座リング＋フタ
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.05, 0.42), whiteCeramic);
+        seat.position.set(0, 0.42, -0.08);
+        mesh.add(seat);
       } else {
         const geo = new THREE.BoxGeometry(fix.size[0], fix.size[2], fix.size[1]);
         mesh = new THREE.Mesh(geo, mat);
@@ -574,9 +670,197 @@ export class Scene3D {
   }
 
   /**
+   * ルームツアー用のポインタードラッグ視線移動イベント
+   */
+  initTourPointerEvents() {
+    const el = this.renderer.domElement;
+
+    el.addEventListener("pointerdown", (e) => {
+      if (!this.isTourMode) return;
+      this.isPointerDown = true;
+      this.lastPointer = { x: e.clientX, y: e.clientY };
+      el.setPointerCapture(e.pointerId);
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!this.isTourMode || !this.isPointerDown) return;
+      const dx = e.clientX - this.lastPointer.x;
+      const dy = e.clientY - this.lastPointer.y;
+      this.lastPointer = { x: e.clientX, y: e.clientY };
+
+      // 感度調整
+      const sensitivity = 0.0035;
+      this.tourYaw += dx * sensitivity;
+      this.tourPitch -= dy * sensitivity;
+
+      // 垂直角度制限 (見上げ/見下ろし ±65度)
+      const maxPitch = 1.15;
+      this.tourPitch = Math.max(-maxPitch, Math.min(maxPitch, this.tourPitch));
+
+      this.notifyTourMove();
+    });
+
+    const endPointer = (e) => {
+      if (!this.isTourMode) return;
+      this.isPointerDown = false;
+      try {
+        if (el.hasPointerCapture(e.pointerId)) {
+          el.releasePointerCapture(e.pointerId);
+        }
+      } catch (err) {}
+    };
+
+    el.addEventListener("pointerup", endPointer);
+    el.addEventListener("pointercancel", endPointer);
+  }
+
+  /**
+   * ルームツアー（人目線ウォークスルー）開始
+   */
+  startTourMode(waypointId = "entrance") {
+    if (this.isTourMode) return;
+
+    // 現在のカメラ状態（鳥瞰・OrbitControls）を退避
+    this.savedCameraState = {
+      position: this.camera.position.clone(),
+      target: this.controls.target.clone(),
+      fov: this.camera.fov
+    };
+
+    this.isTourMode = true;
+    this.controls.enabled = false;
+
+    // 人目線広角視野
+    this.camera.fov = 68;
+    this.camera.updateProjectionMatrix();
+
+    // 初期地点へ移動
+    const wp = FLOOR_PLAN.tourWaypoints?.find(w => w.id === waypointId) || {
+      pos: [5.4, 1.55, 2.15],
+      yaw: Math.PI * 0.5
+    };
+
+    this.teleportTour(wp.pos[0], wp.pos[2], wp.yaw);
+  }
+
+  /**
+   * ルームツアー終了（通常3D視点へ復帰）
+   */
+  stopTourMode() {
+    if (!this.isTourMode) return;
+
+    this.isTourMode = false;
+    this.controls.enabled = true;
+
+    // 退避したカメラ状態を復元
+    if (this.savedCameraState) {
+      this.camera.position.copy(this.savedCameraState.position);
+      this.controls.target.copy(this.savedCameraState.target);
+      this.camera.fov = this.savedCameraState.fov;
+      this.camera.updateProjectionMatrix();
+      this.controls.update();
+    }
+
+    this.onTourMove(null);
+  }
+
+  /**
+   * 部屋ジャンプ / 2Dクリックによるテレポート
+   */
+  teleportTour(x, z, yaw) {
+    this.tourPosition.set(x, 1.55, z);
+    if (yaw !== undefined) {
+      this.tourYaw = yaw;
+      this.tourPitch = 0;
+    }
+    this.notifyTourMove();
+  }
+
+  /**
+   * キーボード入力状態の反映
+   */
+  setTourKey(direction, isDown) {
+    if (direction in this.tourKeys) {
+      this.tourKeys[direction] = isDown;
+    }
+  }
+
+  /**
+   * 2D側に現在位置と向きを通知
+   */
+  notifyTourMove() {
+    this.onTourMove({
+      x: this.tourPosition.x,
+      z: this.tourPosition.z,
+      yaw: this.tourYaw,
+      active: this.isTourMode
+    });
+  }
+
+  /**
+   * ルームツアー移動更新
+   */
+  updateTour(delta) {
+    const moveSpeed = 2.4; // 移動速度 2.4 m/s
+    let moveX = 0;
+    let moveZ = 0;
+
+    // 前後進方向（水平）
+    const fwdX = Math.sin(this.tourYaw);
+    const fwdZ = -Math.cos(this.tourYaw);
+
+    // 左右平行移動（水平）
+    const rightX = Math.cos(this.tourYaw);
+    const rightZ = Math.sin(this.tourYaw);
+
+    if (this.tourKeys.forward) {
+      moveX += fwdX;
+      moveZ += fwdZ;
+    }
+    if (this.tourKeys.backward) {
+      moveX -= fwdX;
+      moveZ -= fwdZ;
+    }
+    if (this.tourKeys.left) {
+      moveX -= rightX;
+      moveZ -= rightZ;
+    }
+    if (this.tourKeys.right) {
+      moveX += rightX;
+      moveZ += rightZ;
+    }
+
+    const len = Math.hypot(moveX, moveZ);
+    if (len > 0.001) {
+      const step = (delta * moveSpeed) / len;
+      const nextX = this.tourPosition.x + moveX * step;
+      const nextZ = this.tourPosition.z + moveZ * step;
+
+      // 建物外壁の内側にクランプ
+      this.tourPosition.x = Math.max(0.3, Math.min(6.4, nextX));
+      this.tourPosition.z = Math.max(0.3, Math.min(11.4, nextZ));
+
+      this.notifyTourMove();
+    }
+
+    // カメラ位置を更新
+    this.camera.position.copy(this.tourPosition);
+
+    // 視線ターゲット
+    const cosPitch = Math.cos(this.tourPitch);
+    const targetX = this.tourPosition.x + Math.sin(this.tourYaw) * cosPitch;
+    const targetY = this.tourPosition.y + Math.sin(this.tourPitch);
+    const targetZ = this.tourPosition.z - Math.cos(this.tourYaw) * cosPitch;
+    this.camera.lookAt(targetX, targetY, targetZ);
+  }
+
+  /**
    * カメラプリセット（実写真アングル等）への切り替え
    */
   applyCameraPreset(preset) {
+    if (this.isTourMode) {
+      this.stopTourMode();
+    }
     this.camera.position.set(...preset.position);
     this.controls.target.set(...preset.target);
     this.camera.fov = preset.fov || 50;
@@ -586,7 +870,17 @@ export class Scene3D {
 
   animate() {
     requestAnimationFrame(this.animate);
-    this.controls.update();
+
+    const now = performance.now();
+    const delta = Math.min((now - this.lastTime) / 1000, 0.1);
+    this.lastTime = now;
+
+    if (this.isTourMode) {
+      this.updateTour(delta);
+    } else {
+      this.controls.update();
+    }
+
     this.renderer.render(this.scene, this.camera);
   }
 }

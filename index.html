@@ -41,6 +41,11 @@
           <!-- JSで自動注入 -->
         </select>
       </div>
+
+      <!-- ルームツアー（人目線ウォークスルー）開始ボタン -->
+      <button id="btn-toggle-tour" class="btn btn-tour" title="人目線（床上1.55m）で部屋の中を自由に歩き回れるモード">
+        <span class="tour-icon">🚶</span> <span class="tour-text">ルームツアー</span>
+      </button>
     </div>
 
     <!-- アクションボタン -->
@@ -155,8 +160,40 @@
 
       <!-- 3D ビューポート (Three.jsレンダラー) -->
       <div class="viewport-3d" id="viewport-3d">
-        <div class="viewport-header-badge">3D リアルタイム立体ビュー (ドラッグで回転・ズーム)</div>
+        <div class="viewport-header-badge" id="viewport-3d-badge">3D リアルタイム立体ビュー (ドラッグで回転・ズーム)</div>
         <div id="container-3d"></div>
+
+        <!-- ルームツアー用 オーバーレイUI -->
+        <div id="tour-overlay" class="tour-overlay hidden">
+          <!-- 上部コントロールバー: 部屋ジャンプ＆終了 -->
+          <div class="tour-topbar">
+            <div class="tour-badge">🚶 人目線ルームツアー</div>
+            <div class="tour-rooms-nav" id="tour-rooms-nav">
+              <!-- JSで部屋ジャンプボタンを注入 -->
+            </div>
+            <button id="btn-exit-tour" class="btn btn-tour-exit" title="ルームツアーを終了して通常3D視点に戻る">✕ 終了</button>
+          </div>
+
+          <!-- 下部操作ガイドヒント -->
+          <div class="tour-guide-box">
+            <div class="tour-guide-text">
+              <span>⌨️ <b>[W][A][S][D]</b> / <b>[↑][←][↓][→]</b> 歩行</span>
+              <span>🖱️ <b>マウスドラッグ</b> 周囲見渡し</span>
+              <span>🗺️ <b>2D図面クリック</b> その場所へ移動</span>
+            </div>
+          </div>
+
+          <!-- 画面タッチ/クリック用バーチャル十字キー（スマホ・マウス歩行対応） -->
+          <div class="tour-dpad" id="tour-dpad">
+            <button class="dpad-btn dpad-up" data-dir="forward" title="前進">▲</button>
+            <div class="dpad-middle">
+              <button class="dpad-btn dpad-left" data-dir="left" title="左へ">◀</button>
+              <div class="dpad-center"></div>
+              <button class="dpad-btn dpad-right" data-dir="right" title="右へ">▶</button>
+            </div>
+            <button class="dpad-btn dpad-down" data-dir="backward" title="後退">▼</button>
+          </div>
+        </div>
       </div>
 
     </main>

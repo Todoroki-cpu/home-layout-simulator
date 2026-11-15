@@ -25,12 +25,21 @@ class App {
       },
       onSelect: (selectedItem) => {
         this.updatePropertyPanel(selectedItem);
+      },
+      onTourTeleport: (x, z) => {
+        if (this.scene3d && this.scene3d.isTourMode) {
+          this.scene3d.teleportTour(x, z);
+        }
       }
     });
 
     // 2. 3D Scene 初期化
     const container3d = document.getElementById("container-3d");
-    this.scene3d = new Scene3D(container3d);
+    this.scene3d = new Scene3D(container3d, {
+      onTourMove: (player) => {
+        this.canvas2d.setTourPlayer(player);
+      }
+    });
 
     // 3. 家具カタログUIの生成
     this.renderCatalog();
@@ -38,10 +47,13 @@ class App {
     // 4. カメラプリセットUIの生成
     this.renderCameraPresets();
 
-    // 5. スプリッター（2D/3D横幅リサイザー）初期化
+    // 5. ルームツアーUIの初期化
+    this.initTourUI();
+
+    // 6. スプリッター（2D/3D横幅リサイザー）初期化
     this.initSplitter();
 
-    // 6. イベントリスナー登録
+    // 7. イベントリスナー登録
     this.bindEvents();
 
     // 7. 保存データの読込、または初期おすすめ配置の適用
@@ -153,6 +165,136 @@ class App {
           this.hidePhotoBadge();
         }
       }
+    });
+  }
+
+  /**
+   * ルームツアー（人目線ウォークスルー）UI＆キーボード制御
+   */
+  initTourUI() {
+    const btnToggle = document.getElementById("btn-toggle-tour");
+    const btnExit = document.getElementById("btn-exit-tour");
+    const overlay = document.getElementById("tour-overlay");
+    const navRooms = document.getElementById("tour-rooms-nav");
+    const badge3d = document.getElementById("viewport-3d-badge");
+
+    // 部屋ジャンプボタン群の生成
+    if (navRooms && FLOOR_PLAN.tourWaypoints) {
+      navRooms.innerHTML = "";
+      FLOOR_PLAN.tourWaypoints.forEach(wp => {
+        const btn = document.createElement("button");
+        btn.className = "tour-room-btn";
+        btn.textContent = wp.name;
+        btn.title = `${wp.name}へ人目線でテレポート`;
+        btn.addEventListener("click", () => {
+          if (!this.scene3d.isTourMode) {
+            this.enterTour(wp.id);
+          } else {
+            this.scene3d.teleportTour(wp.pos[0], wp.pos[2], wp.yaw);
+          }
+        });
+        navRooms.appendChild(btn);
+      });
+    }
+
+    const enterTour = (wpId = "entrance") => {
+      this.hidePhotoBadge();
+      this.scene3d.startTourMode(wpId);
+      if (btnToggle) {
+        btnToggle.classList.add("active");
+        btnToggle.querySelector(".tour-text").textContent = "ツアー終了";
+      }
+      if (overlay) overlay.classList.remove("hidden");
+      if (badge3d) badge3d.textContent = "🚶 人目線ウォークスルー中 (ドラッグで見渡す / WASDで歩行)";
+    };
+
+    const exitTour = () => {
+      this.scene3d.stopTourMode();
+      if (btnToggle) {
+        btnToggle.classList.remove("active");
+        btnToggle.querySelector(".tour-text").textContent = "ルームツアー";
+      }
+      if (overlay) overlay.classList.add("hidden");
+      if (badge3d) badge3d.textContent = "3D リアルタイム立体ビュー (ドラッグで回転・ズーム)";
+    };
+
+    this.enterTour = enterTour;
+    this.exitTour = exitTour;
+
+    if (btnToggle) {
+      btnToggle.addEventListener("click", () => {
+        if (this.scene3d.isTourMode) exitTour();
+        else enterTour();
+      });
+    }
+
+    if (btnExit) {
+      btnExit.addEventListener("click", () => exitTour());
+    }
+
+    // キーボード（WASD / 矢印キー）イベント
+    const isInputActive = () => {
+      const active = document.activeElement;
+      return active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+    };
+
+    window.addEventListener("keydown", (e) => {
+      if (!this.scene3d.isTourMode) return;
+      if (isInputActive()) return;
+
+      if (e.key === "Escape") {
+        exitTour();
+        return;
+      }
+
+      let handled = false;
+      if (e.code === "KeyW" || e.key === "ArrowUp") {
+        this.scene3d.setTourKey("forward", true);
+        handled = true;
+      }
+      if (e.code === "KeyS" || e.key === "ArrowDown") {
+        this.scene3d.setTourKey("backward", true);
+        handled = true;
+      }
+      if (e.code === "KeyA" || e.key === "ArrowLeft") {
+        this.scene3d.setTourKey("left", true);
+        handled = true;
+      }
+      if (e.code === "KeyD" || e.key === "ArrowRight") {
+        this.scene3d.setTourKey("right", true);
+        handled = true;
+      }
+
+      if (handled) e.preventDefault();
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (!this.scene3d.isTourMode) return;
+
+      if (e.code === "KeyW" || e.key === "ArrowUp") this.scene3d.setTourKey("forward", false);
+      if (e.code === "KeyS" || e.key === "ArrowDown") this.scene3d.setTourKey("backward", false);
+      if (e.code === "KeyA" || e.key === "ArrowLeft") this.scene3d.setTourKey("left", false);
+      if (e.code === "KeyD" || e.key === "ArrowRight") this.scene3d.setTourKey("right", false);
+    });
+
+    // 画面上バーチャル十字キー（スマホ/マウス用）
+    const dpadBtns = document.querySelectorAll(".dpad-btn");
+    dpadBtns.forEach(btn => {
+      const dir = btn.dataset.dir;
+      const start = (e) => {
+        e.preventDefault();
+        btn.classList.add("active");
+        this.scene3d.setTourKey(dir, true);
+      };
+      const stop = (e) => {
+        btn.classList.remove("active");
+        this.scene3d.setTourKey(dir, false);
+      };
+
+      btn.addEventListener("pointerdown", start);
+      btn.addEventListener("pointerup", stop);
+      btn.addEventListener("pointercancel", stop);
+      btn.addEventListener("pointerleave", stop);
     });
   }
 

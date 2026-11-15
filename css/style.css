@@ -667,3 +667,206 @@ body {
   font-weight: 500;
   color: var(--text-main);
 }
+
+/* ==========================================================================
+   ルームツアー (人目線ウォークスルー) UI スタイル
+   ========================================================================== */
+
+/* ヘッダーのルームツアースイッチボタン */
+.btn-tour {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border-color: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-tour:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-tour.active {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  border-color: #fb7185;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.5);
+}
+
+/* 3Dビュー内のオーバーレイコンテナ */
+.tour-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.tour-overlay.hidden {
+  display: none !important;
+}
+
+/* 上部コントロールバー (部屋ジャンプ＆終了ボタン) */
+.tour-topbar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 30px;
+  padding: 6px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-width: 95%;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.tour-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  padding: 4px 8px;
+  background: rgba(2, 132, 199, 0.2);
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.tour-rooms-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 580px;
+  padding: 2px 0;
+}
+
+.tour-room-btn {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f1f5f9;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.tour-room-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.btn-tour-exit {
+  background: #be123c;
+  color: #ffffff;
+  border-color: #f43f5e;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.btn-tour-exit:hover {
+  background: #e11d48;
+}
+
+/* 下部操作ガイドヒント */
+.tour-guide-box {
+  pointer-events: none;
+  align-self: center;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 8px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  margin-bottom: 8px;
+}
+
+.tour-guide-text {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: #e2e8f0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tour-guide-text b {
+  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.25);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* バーチャル十字キー (スマホ・マウス歩行用) */
+.tour-dpad {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dpad-middle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dpad-center {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.dpad-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(51, 65, 85, 0.9);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: none;
+  transition: all 0.1s;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: #0284c7;
+  color: #fff;
+  border-color: #38bdf8;
+  transform: scale(0.92);
+}

@@ -84,12 +84,14 @@ export const FLOOR_PLAN = {
     },
     {
       id: "corridor",
-      name: "廊下",
+      name: "廊下・ホール",
       area畳: 5.5,
       type: "flooring",
       polygon: [
-        [3.62, 1.40],
-        [4.54, 1.40],
+        [3.62, 1.70],
+        [5.86, 1.70],
+        [5.86, 2.63],
+        [4.54, 2.63],
         [4.54, 9.18],
         [3.62, 9.18]
       ],
@@ -99,30 +101,44 @@ export const FLOOR_PLAN = {
     {
       id: "entrance",
       name: "玄関",
-      area畳: 2.0,
+      area畳: 1.2,
       type: "tile",
       polygon: [
-        [4.54, 0.14],
-        [6.50, 0.14],
-        [6.50, 2.63],
-        [4.54, 2.63]
+        [5.86, 1.70],
+        [6.63, 1.70],
+        [6.63, 2.63],
+        [5.86, 2.63]
       ],
-      labelPos: [5.52, 1.38],
-      color: "#d8d4cf"
+      labelPos: [6.24, 2.15],
+      color: "#b0aba4"
     },
     {
       id: "toilet",
       name: "トイレ",
-      area畳: 1.5,
+      area畳: 2.2,
       type: "tile",
       polygon: [
         [3.62, 0.14],
-        [4.54, 0.14],
-        [4.54, 2.63],
-        [3.62, 2.63]
+        [5.86, 0.14],
+        [5.86, 1.70],
+        [3.62, 1.70]
       ],
-      labelPos: [4.08, 1.38],
+      labelPos: [4.74, 0.92],
       color: "#e8eff0"
+    },
+    {
+      id: "mb",
+      name: "MB",
+      area畳: 0.8,
+      type: "tile",
+      polygon: [
+        [5.86, 0.14],
+        [6.63, 0.14],
+        [6.63, 1.15],
+        [5.86, 1.15]
+      ],
+      labelPos: [6.24, 0.65],
+      color: "#d0d4d8"
     },
     {
       id: "washroom",
@@ -246,7 +262,7 @@ export const FLOOR_PLAN = {
         [3.62, 3.52]
       ],
       labelPos: [4.08, 3.08],
-      door: { pos: [3.62, 3.08], width: 0.85, facing: "W", type: "folding" },
+      door: { pos: [4.08, 2.63], width: 0.85, facing: "N", type: "folding" },
       color: "#e8dcce"
     }
   ],
@@ -297,9 +313,12 @@ export const FLOOR_PLAN = {
     { p1: [4.54, 2.63], p2: [4.54, 6.32], type: "interior" },
     { p1: [4.54, 6.32], p2: [4.54, 9.18], type: "interior" }, // キッチン西壁（廊下面）
 
-    // 玄関/トイレ/洗面脱衣/浴室の横間仕切り
-    { p1: [3.62, 2.63], p2: [4.54, 2.63], type: "interior" }, // トイレ南壁
-    { p1: [4.54, 2.63], p2: [6.63, 2.63], type: "interior" }, // 玄関南/洗面北壁
+    // トイレ・MB・下駄箱・玄関周りの間仕切り壁
+    { p1: [3.62, 1.70], p2: [5.86, 1.70], type: "interior" }, // トイレ南壁（廊下境界）
+    { p1: [5.86, 0.0], p2: [5.86, 1.70], type: "interior" },  // トイレ東壁 / MB・下駄箱西壁
+    { p1: [5.86, 1.15], p2: [6.63, 1.15], type: "interior" }, // MB南壁 / 下駄箱北壁
+    { p1: [5.86, 1.70], p2: [6.63, 1.70], type: "interior" }, // 下駄箱南壁 / 玄関土間北壁
+    { p1: [4.54, 2.63], p2: [6.63, 2.63], type: "interior" }, // 玄関・ホール南壁 / 洗面所北壁
     { p1: [4.54, 4.80], p2: [6.63, 4.80], type: "interior" }, // 洗面南/浴室北壁
     { p1: [4.54, 6.32], p2: [6.63, 6.32], type: "interior" }, // 浴室南/キッチン北壁
   ],
@@ -356,54 +375,79 @@ export const FLOOR_PLAN = {
 
   // ドア・建具 (Doors & Openings)
   doors: [
-    // 玄関ドア (IMG_6303: 幅0.85m)
+    // 玄関ドア (東外壁 x=6.63, y=2.15, 外開き IMG_6303再現)
     {
       id: "door_entrance",
-      pos: [5.8, 0.07],
+      name: "玄関ドア",
+      pos: [6.63, 2.15],
+      width: 0.85,
+      type: "hinged",
+      swing: "out",
+      facing: "E"
+    },
+    // MB扉 (東外壁 x=6.63, y=0.65, 外開き)
+    {
+      id: "door_mb",
+      name: "MB扉",
+      pos: [6.63, 0.65],
+      width: 0.65,
+      type: "hinged",
+      swing: "out",
+      facing: "E"
+    },
+    // トイレドア (南壁 y=1.70, x=4.10, トイレ内開き)
+    {
+      id: "door_toilet",
+      name: "トイレドア",
+      pos: [4.10, 1.70],
+      width: 0.65,
+      type: "hinged",
+      swing: "in",
+      facing: "N"
+    },
+    // 洋室1ドア (x=3.62, y=2.15, 室内開き)
+    {
+      id: "door_western1",
+      name: "洋室1ドア",
+      pos: [3.62, 2.15],
+      width: 0.75,
+      type: "hinged",
+      swing: "in",
+      facing: "W"
+    },
+    // 洋室2ドア (x=3.62, y=4.0, 室内開き)
+    {
+      id: "door_western2",
+      name: "洋室2ドア",
+      pos: [3.62, 4.0],
+      width: 0.75,
+      type: "hinged",
+      swing: "in",
+      facing: "W"
+    },
+    // 洗面所ドア (x=4.54, y=3.2, 引き戸)
+    {
+      id: "door_washroom",
+      name: "洗面所ドア",
+      pos: [4.54, 3.2],
+      width: 0.75,
+      type: "sliding",
+      facing: "E"
+    },
+    // LDK入り口ドア (y=9.18, x=4.08, LDK内開き)
+    {
+      id: "door_ldk",
+      name: "LDKドア",
+      pos: [4.08, 9.18],
       width: 0.85,
       type: "hinged",
       swing: "in",
-      rotation: 0
-    },
-    // トイレドア
-    {
-      id: "door_toilet",
-      pos: [4.08, 2.63],
-      width: 0.65,
-      type: "hinged",
-      swing: "out"
-    },
-    // 洋室1ドア
-    {
-      id: "door_western1",
-      pos: [3.62, 2.8],
-      width: 0.75,
-      type: "hinged"
-    },
-    // 洋室2ドア
-    {
-      id: "door_western2",
-      pos: [3.62, 3.8],
-      width: 0.75,
-      type: "hinged"
-    },
-    // 洗面所ドア
-    {
-      id: "door_washroom",
-      pos: [4.54, 3.2],
-      width: 0.75,
-      type: "sliding"
-    },
-    // LDK入り口ドア
-    {
-      id: "door_ldk",
-      pos: [4.08, 9.18],
-      width: 0.85,
-      type: "hinged"
+      facing: "S"
     },
     // 和室とLDKの引き込み戸 (ふすま全開可能 幅2.4m)
     {
       id: "door_washitsu_ldk",
+      name: "和室・LDK間仕切りふすま",
       pos: [1.8, 9.18],
       width: 2.4,
       type: "fusuma"
@@ -435,12 +479,12 @@ export const FLOOR_PLAN = {
         hoodPos: [6.15, 8.6, 1.95]
       }
     },
-    // シューズボックス / 下駄箱 (IMG_6303)
+    // シューズボックス / 下駄箱 (IMG_6303: 玄関土間の北側)
     {
       id: "shoes_box",
       name: "玄関収納 (下駄箱)",
-      pos: [6.2, 1.4, 1.15],
-      size: [0.45, 1.5, 2.3],
+      pos: [6.24, 1.42, 1.15],
+      size: [0.77, 0.55, 2.3],
       color: "#4a3c31"
     },
     // 洗面化粧台 (IMG_6298)
@@ -459,12 +503,21 @@ export const FLOOR_PLAN = {
       size: [1.6, 0.8, 0.6],
       color: "#f5f5f5"
     },
-    // トイレ便器＋手洗いカウンター (IMG_6301)
+    // トイレ手洗いカウンター (IMG_6301: 北壁沿いカウンター収納＆ボウル)
+    {
+      id: "toilet_counter",
+      name: "手洗いカウンター",
+      pos: [4.40, 0.34, 0.425],
+      size: [1.35, 0.36, 0.85],
+      color: "#4a3c31"
+    },
+    // トイレ便器 (IMG_6301: ロータンクトイレ・東壁付け西向き)
     {
       id: "toilet_bowl",
-      name: "トイレ便器・手洗いカウンター",
-      pos: [4.08, 0.9, 0.4],
-      size: [0.75, 1.1, 0.75],
+      name: "トイレ便器",
+      pos: [5.35, 1.05, 0.38],
+      size: [0.70, 0.45, 0.75],
+      rotation: 90,
       color: "#ffffff"
     },
     // LDKエアコン (IMG_6292: 斜め壁の上部 - 3Dのみ壁面表示)
@@ -476,6 +529,19 @@ export const FLOOR_PLAN = {
       rotation: 45,
       color: "#ffffff"
     }
+  ],
+
+  // ルームツアー用 部屋別視点定義 (人目線ウォークスルー)
+  tourWaypoints: [
+    { id: "entrance", name: "玄関", pos: [5.4, 1.55, 2.15], yaw: Math.PI * 0.5 },
+    { id: "corridor", name: "廊下", pos: [4.08, 1.55, 3.8], yaw: Math.PI },
+    { id: "toilet", name: "トイレ", pos: [4.5, 1.55, 1.1], yaw: -Math.PI * 0.25 },
+    { id: "ldk", name: "LDK", pos: [3.3, 1.55, 9.8], yaw: Math.PI },
+    { id: "kitchen", name: "キッチン", pos: [5.2, 1.55, 8.0], yaw: -Math.PI * 0.5 },
+    { id: "washitsu", name: "和室6畳", pos: [1.88, 1.55, 8.5], yaw: Math.PI * 0.5 },
+    { id: "western1", name: "洋室6.0畳", pos: [1.88, 1.55, 1.4], yaw: Math.PI * 0.5 },
+    { id: "western2", name: "洋室5.8畳", pos: [1.88, 1.55, 4.6], yaw: 0 },
+    { id: "washroom", name: "洗面脱衣室", pos: [5.4, 1.55, 3.7], yaw: 0 }
   ],
 
   // 実写真アングル プリセット (正しい広角パースペクティブ)
