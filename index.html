@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3LDK 家具配置 2D＆3D シミュレーター</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Three.js Import Map (モダンES Modules構成・ビルド不要でGitHub Pages即時公開可能) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- ヘッダーツールバー -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-title">
+        <span>🏠 3LDK 家具配置シミュレーター</span>
+        <span class="brand-badge">2D & 3D 同期</span>
+      </div>
+    </div>
+
+    <!-- 画面レイアウト切替 ＆ カメラアングル -->
+    <div class="header-center">
+      <div class="btn-group">
+        <button class="btn-view-mode active" data-mode="split" title="2D配置と3Dプレビューを左右同時に表示">2D + 3D 分割</button>
+        <button class="btn-view-mode" data-mode="2d" title="2D配置画面を全画面表示">2D のみ</button>
+        <button class="btn-view-mode" data-mode="3d" title="3Dビューを全画面表示">3D のみ</button>
+      </div>
+
+      <div class="camera-select-wrap">
+        <span>📷 視点:</span>
+        <select id="camera-preset-select">
+          <!-- JSで自動注入 -->
+        </select>
+      </div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="header-actions">
+      <button id="btn-open-gallery" class="btn" title="内装の実写真を確認">🖼️ 実写真</button>
+      <button id="btn-reset-preset" class="btn" title="おすすめの初期家具配置に戻す">🔄 おすすめ配置</button>
+      <button id="btn-clear-all" class="btn" title="全家具を削除">🗑️ 全クリア</button>
+      <button id="btn-export-json" class="btn" title="家具レイアウトをJSON保存">💾 保存</button>
+      <button id="btn-import-json" class="btn" title="JSON読込">📂 読込</button>
+      <input type="file" id="file-import-json" accept=".json" style="display: none;" />
+    </div>
+  </header>
+
+  <!-- アプリメイン領域 -->
+  <div class="app-body">
+
+    <!-- 左サイドバー: カタログ ＆ プロパティ -->
+    <aside class="sidebar">
+      <!-- カテゴリタブ -->
+      <div class="catalog-tabs">
+        <button class="cat-tab active" data-category="all">すべて</button>
+        <button class="cat-tab" data-category="living">リビング</button>
+        <button class="cat-tab" data-category="dining">ダイニング</button>
+        <button class="cat-tab" data-category="bedroom">寝室/ワーク</button>
+        <button class="cat-tab" data-category="washitsu">和室</button>
+        <button class="cat-tab" data-category="appliance">家電/設備</button>
+      </div>
+
+      <!-- 家具カード一覧 -->
+      <div id="catalog-list" class="catalog-container">
+        <!-- JSで注入 -->
+      </div>
+
+      <!-- 選択中家具プロパティパネル (2D上でクリック選択時に表示) -->
+      <div id="property-panel" class="property-panel hidden">
+        <div class="prop-title">
+          <span>選択中家具の編集</span>
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">家具名</label>
+          <input type="text" id="prop-name" class="prop-input" />
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">寸法 (幅 × 奥行 × 高さ mm)</label>
+          <div class="prop-row">
+            <input type="number" id="prop-width" class="prop-input" title="幅 W" step="10" />
+            <input type="number" id="prop-depth" class="prop-input" title="奥行 D" step="10" />
+            <input type="number" id="prop-height" class="prop-input" title="高さ H" step="10" />
+          </div>
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">向き・角度: <span id="prop-rot-val">0°</span></label>
+          <div class="prop-row">
+            <input type="range" id="prop-rotation" min="0" max="359" value="0" style="flex: 1;" />
+            <button id="btn-rot-90" class="btn" style="padding: 4px 8px;">↻ 90°</button>
+          </div>
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">カラー / 素材</label>
+          <div class="prop-row">
+            <input type="color" id="prop-color" style="width: 36px; height: 28px; border: none; cursor: pointer; background: transparent;" />
+            <div id="prop-color-palette" class="color-palette"></div>
+          </div>
+        </div>
+
+        <div class="prop-actions">
+          <button id="btn-duplicate-item" class="btn" style="flex: 1;">複製</button>
+          <button id="btn-delete-item" class="btn btn-delete" style="flex: 1;">削除</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- メインワークスペース (2D/3D画面) -->
+    <main id="main-workspace" class="workspace-layout mode-split">
+
+      <!-- 2D 平面図ビューポート (家具配置コア画面) -->
+      <div class="viewport-2d">
+        <div class="viewport-header-badge">2D 間取り家具配置 (ドラッグで移動・回転)</div>
+        <canvas id="canvas-2d"></canvas>
+
+        <!-- 2D下部コントロールバー -->
+        <div class="viewport-controls-bar">
+          <label title="実際の間取り図画像(floorplan.jpg)を下敷きとして透過表示">
+            <span>間取り図下絵:</span>
+            <input type="range" id="bg-opacity-slider" min="0" max="1" step="0.05" value="0.25" style="width: 80px;" />
+          </label>
+          <label title="5cm単位でグリッドにスナップ">
+            <input type="checkbox" id="snap-toggle" />
+            <span>5cmグリッド吸着</span>
+          </label>
+          <span style="color: var(--text-muted);">ホイール: 拡大縮小 | 右ドラッグ: 画面移動</span>
+        </div>
+      </div>
+
+      <!-- 3D ビューポート (Three.jsレンダラー) -->
+      <div class="viewport-3d">
+        <div class="viewport-header-badge">3D リアルタイム立体ビュー (ドラッグで回転・ズーム)</div>
+        <div id="container-3d"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- 実写真ギャラリーモーダル -->
+  <div id="photo-gallery-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>実写真一覧 (物件の内装ディテール)</h3>
+        <button id="btn-close-gallery" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6291.JPEG" alt="和室" />
+          <div class="gallery-label">和室 (畳・障子・押入)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6292.JPEG" alt="LDK斜め壁" />
+          <div class="gallery-label">LDK (斜め壁・エアコン)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6293.JPEG" alt="LDK掃き出し窓" />
+          <div class="gallery-label">LDK (2連大型掃き出し窓)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6294.JPEG" alt="和室から廊下" />
+          <div class="gallery-label">和室から廊下方向</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6295.JPEG" alt="システムキッチン" />
+          <div class="gallery-label">システムキッチン</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6296.JPEG" alt="廊下" />
+          <div class="gallery-label">廊下・梁</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6297.JPEG" alt="洋室" />
+          <div class="gallery-label">洋室 (バルコニー窓)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6298.JPEG" alt="洗面化粧台" />
+          <div class="gallery-label">洗面化粧台・洗濯機置き場</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6299.JPEG" alt="洋室2" />
+          <div class="gallery-label">洋室 (別アングル)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6300.JPEG" alt="クローゼット" />
+          <div class="gallery-label">クローゼット内部</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6301.JPEG" alt="トイレ" />
+          <div class="gallery-label">トイレ (カウンター手洗い)</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6302.JPEG" alt="物入" />
+          <div class="gallery-label">収納・可動棚</div>
+        </div>
+        <div class="gallery-item">
+          <img src="assets/photos/IMG_6303.JPEG" alt="玄関" />
+          <div class="gallery-label">玄関・下駄箱収納</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- アプリエントリースクリプト -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
