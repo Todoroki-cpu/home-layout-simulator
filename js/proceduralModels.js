@@ -488,4 +488,136 @@ export class FurnitureModelFactory {
 
     return group;
   }
+
+  /**
+   * ポール式テレビ 55型 (Pole TV Stand 55-inch)
+   * 省スペースな自立スチールポールスタンド ＋ 55インチ大画面薄型TV
+   */
+  static createPoleTv(w = 1.25, d = 0.4, h = 1.38, color = "#212121") {
+    const group = new THREE.Group();
+    const steelMat = this.getMaterial(color, 0.3, 0.7);
+    const tvMat = this.getMaterial("#111111", 0.2, 0.3);
+    const screenMat = this.getMaterial("#1a202c", 0.1, 0.5);
+    const accentMat = this.getMaterial("#90a4ae", 0.3, 0.8);
+
+    // 1. 薄型ベースプレート (床面スリムベース)
+    const baseW = Math.min(0.7, w * 0.6);
+    const baseD = d;
+    const baseGeo = new THREE.BoxGeometry(baseW, 0.015, baseD);
+    const base = new THREE.Mesh(baseGeo, steelMat);
+    base.position.set(0, 0.0075, 0);
+    base.castShadow = true;
+    base.receiveShadow = true;
+    group.add(base);
+
+    // 2. 垂直スチールポール (ダブル支柱)
+    const poleH = h * 0.95;
+    const poleGeo = new THREE.CylinderGeometry(0.025, 0.025, poleH, 16);
+    const poleL = new THREE.Mesh(poleGeo, steelMat);
+    poleL.position.set(-0.06, poleH * 0.5, 0);
+    poleL.castShadow = true;
+    group.add(poleL);
+
+    const poleR = new THREE.Mesh(poleGeo, steelMat);
+    poleR.position.set(0.06, poleH * 0.5, 0);
+    poleR.castShadow = true;
+    group.add(poleR);
+
+    // 3. 中段シェルフ棚板 (サウンドバー/レコーダー棚)
+    const shelfGeo = new THREE.BoxGeometry(0.55, 0.015, 0.28);
+    const shelf = new THREE.Mesh(shelfGeo, steelMat);
+    shelf.position.set(0, 0.5, 0.05);
+    shelf.castShadow = true;
+    group.add(shelf);
+
+    // 4. 55インチ薄型テレビ (幅約123cm, 高さ約71cm, 16:9)
+    const tvW = Math.min(1.23, w);
+    const tvH = tvW * (9 / 16);
+    const tvFrameGeo = new THREE.BoxGeometry(tvW, tvH, 0.035);
+    const tvFrame = new THREE.Mesh(tvFrameGeo, tvMat);
+    const tvCenterY = Math.max(tvH * 0.5 + 0.65, h - tvH * 0.5);
+    tvFrame.position.set(0, tvCenterY, 0.025);
+    tvFrame.castShadow = true;
+    group.add(tvFrame);
+
+    // 画面ディスプレイ
+    const screenGeo = new THREE.PlaneGeometry(tvW * 0.97, tvH * 0.95);
+    const screen = new THREE.Mesh(screenGeo, screenMat);
+    screen.position.set(0, tvCenterY, 0.043);
+    group.add(screen);
+
+    // 下部ベゼルのロゴ/スピーカーライン
+    const barGeo = new THREE.BoxGeometry(tvW * 0.4, 0.008, 0.005);
+    const bar = new THREE.Mesh(barGeo, accentMat);
+    bar.position.set(0, tvCenterY - tvH * 0.48, 0.044);
+    group.add(bar);
+
+    // 背面マウント金具 (VESA)
+    const mountGeo = new THREE.BoxGeometry(0.35, 0.35, 0.04);
+    const mount = new THREE.Mesh(mountGeo, steelMat);
+    mount.position.set(0, tvCenterY, 0);
+    group.add(mount);
+
+    return group;
+  }
+
+  /**
+   * サイドボード (Sideboard / Cabinet)
+   * 指定寸法: 幅150cm (1.5m), 奥行き40cm (0.4m), 高さ80cm (0.8m)
+   */
+  static createSideboard(w = 1.5, d = 0.4, h = 0.8, color = "#5d4037") {
+    const group = new THREE.Group();
+    const woodMat = this.getMaterial(color, 0.45, 0.05);
+    const legMat = this.getMaterial("#212121", 0.3, 0.8);
+    const handleMat = this.getMaterial("#d4af37", 0.3, 0.7); // ゴールド調アクセント
+
+    const legH = 0.15; // 脚の高さ（床から15cm浮く上品なデザイン）
+    const bodyH = h - legH;
+
+    // 1. キャビネット本体
+    const bodyGeo = new THREE.BoxGeometry(w, bodyH, d);
+    const body = new THREE.Mesh(bodyGeo, woodMat);
+    body.position.set(0, legH + bodyH * 0.5, 0);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    // 2. 天板の縁（わずかにせり出す天板）
+    const topGeo = new THREE.BoxGeometry(w * 1.01, 0.025, d * 1.02);
+    const top = new THREE.Mesh(topGeo, woodMat);
+    top.position.set(0, h - 0.0125, 0);
+    top.castShadow = true;
+    group.add(top);
+
+    // 3. 扉・引き出しの3分割デザイン
+    const doorCount = 3;
+    const doorW = (w * 0.97) / doorCount;
+    for (let i = 0; i < doorCount; i++) {
+      const dx = (i + 0.5) * doorW - (w * 0.97) * 0.5;
+      const doorPanelGeo = new THREE.BoxGeometry(doorW * 0.96, bodyH * 0.92, 0.015);
+      const doorPanel = new THREE.Mesh(doorPanelGeo, woodMat);
+      doorPanel.position.set(dx, legH + bodyH * 0.5, d * 0.5 + 0.008);
+      group.add(doorPanel);
+
+      // 金属製ミニマル取っ手
+      const handleGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.12, 8);
+      handleGeo.rotateZ(Math.PI * 0.5);
+      const handle = new THREE.Mesh(handleGeo, handleMat);
+      handle.position.set(dx, legH + bodyH * 0.75, d * 0.5 + 0.022);
+      group.add(handle);
+    }
+
+    // 4. 4本スリムスチール脚
+    const legGeo = new THREE.CylinderGeometry(0.018, 0.012, legH, 8);
+    const lx = w * 0.5 - 0.08;
+    const lz = d * 0.5 - 0.06;
+    [[-lx, -lz], [lx, -lz], [-lx, lz], [lx, lz]].forEach(([x, z]) => {
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(x, legH * 0.5, z);
+      leg.castShadow = true;
+      group.add(leg);
+    });
+
+    return group;
+  }
 }

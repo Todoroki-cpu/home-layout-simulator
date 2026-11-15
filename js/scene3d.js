@@ -194,6 +194,26 @@ export class Scene3D {
       archGroup.add(floorMesh);
     });
 
+    // 1-2. クローゼット・物入の床メッシュ (隙間を完全に閉塞)
+    if (FLOOR_PLAN.closets) {
+      const closetFloorMat = new THREE.MeshStandardMaterial({
+        color: "#c8bcae",
+        roughness: 0.6
+      });
+      FLOOR_PLAN.closets.forEach(cl => {
+        const shape = new THREE.Shape();
+        cl.polygon.forEach((p, idx) => {
+          if (idx === 0) shape.moveTo(p[0], p[1]);
+          else shape.lineTo(p[0], p[1]);
+        });
+        const geo = new THREE.ShapeGeometry(shape);
+        geo.rotateX(Math.PI * 0.5);
+        const mesh = new THREE.Mesh(geo, closetFloorMat);
+        mesh.receiveShadow = true;
+        archGroup.add(mesh);
+      });
+    }
+
     // 2. 構造壁の押し出し生成
     // 俯瞰で見やすいよう、間仕切り壁は高さ1.6m、外壁は2.4mまたは断面表示可能
     const wallH = 2.4;
@@ -279,6 +299,98 @@ export class Scene3D {
       beamMesh.castShadow = true;
       archGroup.add(beamMesh);
     });
+
+    // 6. クローゼット・押入扉の3D生成 (実写真 IMG_6300の木目折れ戸 & IMG_6291のふすま)
+    if (FLOOR_PLAN.closets) {
+      const darkDoorMat = new THREE.MeshStandardMaterial({
+        color: "#3b2d24",
+        roughness: 0.5,
+        metalness: 0.05
+      });
+      const fusumaMat = new THREE.MeshStandardMaterial({
+        color: "#f4f1e6",
+        roughness: 0.85
+      });
+      const woodTrimMat = new THREE.MeshStandardMaterial({
+        color: "#4a3525",
+        roughness: 0.6
+      });
+      const handleMat = new THREE.MeshStandardMaterial({
+        color: "#d4af37",
+        metalness: 0.7,
+        roughness: 0.3
+      });
+
+      const doorH = 2.1; // 扉の高さ
+
+      FLOOR_PLAN.closets.forEach(cl => {
+        if (!cl.door) return;
+        const d = cl.door;
+        const dGroup = new THREE.Group();
+
+        if (d.type === "folding") {
+          // 折れ戸 (クローゼット用木目扉 4枚連動調)
+          const panelCount = 4;
+          const pW = d.width / panelCount;
+          for (let i = 0; i < panelCount; i++) {
+            const pMesh = new THREE.Mesh(
+              new THREE.BoxGeometry(pW * 0.98, doorH, 0.035),
+              darkDoorMat
+            );
+            const px = (i + 0.5) * pW - d.width * 0.5;
+            pMesh.position.set(px, doorH * 0.5, 0);
+            pMesh.castShadow = true;
+            dGroup.add(pMesh);
+          }
+          // 取っ手
+          const hL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.03), darkDoorMat);
+          hL.position.set(-d.width * 0.15, doorH * 0.45, 0.025);
+          dGroup.add(hL);
+          const hR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.03), darkDoorMat);
+          hR.position.set(d.width * 0.15, doorH * 0.45, 0.025);
+          dGroup.add(hR);
+        } else if (d.type === "fusuma") {
+          // 和室押入ふすま (2枚引き違いふすま IMG_6291再現)
+          const fW = d.width * 0.52;
+          // 左ふすま
+          const fLeft = new THREE.Mesh(
+            new THREE.BoxGeometry(fW, doorH, 0.03),
+            fusumaMat
+          );
+          fLeft.position.set(-d.width * 0.25, doorH * 0.5, -0.015);
+          fLeft.castShadow = true;
+          dGroup.add(fLeft);
+
+          // 右ふすま
+          const fRight = new THREE.Mesh(
+            new THREE.BoxGeometry(fW, doorH, 0.03),
+            fusumaMat
+          );
+          fRight.position.set(d.width * 0.25, doorH * 0.5, 0.015);
+          fRight.castShadow = true;
+          dGroup.add(fRight);
+
+          // ふすま丸引手
+          const pullGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.005, 16);
+          pullGeo.rotateX(Math.PI * 0.5);
+          const pullL = new THREE.Mesh(pullGeo, handleMat);
+          pullL.position.set(-d.width * 0.06, doorH * 0.45, 0.002);
+          dGroup.add(pullL);
+
+          const pullR = new THREE.Mesh(pullGeo, handleMat);
+          pullR.position.set(d.width * 0.06, doorH * 0.45, 0.032);
+          dGroup.add(pullR);
+        }
+
+        // 配置と回転
+        dGroup.position.set(d.pos[0], 0, d.pos[1]);
+        if (d.facing === "S") dGroup.rotation.y = Math.PI;
+        else if (d.facing === "E") dGroup.rotation.y = Math.PI * 0.5;
+        else if (d.facing === "W") dGroup.rotation.y = -Math.PI * 0.5;
+
+        archGroup.add(dGroup);
+      });
+    }
 
     this.scene.add(archGroup);
   }
@@ -424,6 +536,10 @@ export class Scene3D {
         return FurnitureModelFactory.createZataku(w, d, h, color);
       case "bookshelf":
         return FurnitureModelFactory.createBookshelf(w, d, h, color);
+      case "poleTv":
+        return FurnitureModelFactory.createPoleTv(w, d, h, color);
+      case "sideboard":
+        return FurnitureModelFactory.createSideboard(w, d, h, color);
       default: {
         // フォールバック: 正確な寸法の角丸ボックス
         const grp = new THREE.Group();

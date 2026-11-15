@@ -42,6 +42,30 @@ export const FURNITURE_CATALOG = [
     icon: "📺"
   },
   {
+    type: "pole_tv_55",
+    name: "ポール式テレビ 55型",
+    category: "living",
+    width: 1.25,
+    depth: 0.40,
+    height: 1.38,
+    color: "#212121",
+    colorOptions: ["#212121", "#ffffff", "#424242", "#8d6e63"],
+    modelType: "poleTv",
+    icon: "📺"
+  },
+  {
+    type: "sideboard_150",
+    name: "サイドボード (W150 D40 H80)",
+    category: "living",
+    width: 1.50,
+    depth: 0.40,
+    height: 0.80,
+    color: "#5d4037",
+    colorOptions: ["#5d4037", "#8d6e63", "#3e2723", "#212121", "#f5f5f5"],
+    modelType: "sideboard",
+    icon: "🗄️"
+  },
+  {
     type: "coffee_table",
     name: "リビングテーブル",
     category: "living",

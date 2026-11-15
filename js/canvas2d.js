@@ -307,6 +307,9 @@ export class Canvas2D {
     // 部屋ポリゴン描画
     this.drawRooms(ctx);
 
+    // クローゼット・物入・押入描画 (隙間解消＆折れ戸記号)
+    this.drawClosets(ctx);
+
     // 固定設備描画 (キッチン、洗面、便器等)
     this.drawFixedFixtures(ctx);
 
@@ -377,6 +380,86 @@ export class Canvas2D {
       ctx.font = `600 ${Math.max(10, Math.min(14, this.zoom * 0.22))}px sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(room.name, lpt.x, lpt.y);
+    });
+    ctx.restore();
+  }
+
+  drawClosets(ctx) {
+    if (!FLOOR_PLAN.closets) return;
+    ctx.save();
+    FLOOR_PLAN.closets.forEach(cl => {
+      // 1. 収納床ポリゴン塗りつぶし (部屋間の隙間を綺麗にカバー)
+      ctx.fillStyle = cl.color || "#e8dcce";
+      ctx.strokeStyle = "#8d7b68";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      cl.polygon.forEach((p, idx) => {
+        const pt = this.mToPx(p[0], p[1]);
+        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 2. 収納名ラベル (物入 / 押入)
+      const lpt = this.mToPx(cl.labelPos[0], cl.labelPos[1]);
+      ctx.fillStyle = "#5d4a36";
+      ctx.font = `600 ${Math.max(9, Math.min(12, this.zoom * 0.2))}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(cl.name, lpt.x, lpt.y);
+
+      // 3. ドア（折れ戸・ふすま）記号の描画
+      if (cl.door) {
+        const d = cl.door;
+        const dpt = this.mToPx(d.pos[0], d.pos[1]);
+        const wPx = d.width * this.zoom;
+
+        ctx.save();
+        ctx.translate(dpt.x, dpt.y);
+
+        if (d.facing === "S") ctx.rotate(Math.PI);
+        else if (d.facing === "E") ctx.rotate(Math.PI * 0.5);
+        else if (d.facing === "W") ctx.rotate(-Math.PI * 0.5);
+
+        if (d.type === "folding") {
+          // 折れ戸記号: 2連の山型（折れ戸が開く方向を示す三角形）
+          ctx.strokeStyle = "#4a3b2c";
+          ctx.lineWidth = 2;
+          const halfW = wPx * 0.5;
+          const qW = halfW * 0.5;
+          const peakH = 10;
+
+          // 左側と右側の山型
+          ctx.beginPath();
+          ctx.moveTo(-halfW, 0);
+          ctx.lineTo(-halfW + qW, -peakH);
+          ctx.lineTo(0, 0);
+          ctx.lineTo(qW, -peakH);
+          ctx.lineTo(halfW, 0);
+          ctx.stroke();
+
+          // 扉開閉クリアランスゾーン（点線）
+          ctx.strokeStyle = "rgba(180, 100, 60, 0.4)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.strokeRect(-halfW, -peakH * 1.5, wPx, peakH * 1.5);
+          ctx.setLineDash([]);
+        } else if (d.type === "fusuma") {
+          // ふすま2枚引き違い線
+          ctx.strokeStyle = "#4a3b2c";
+          ctx.lineWidth = 2.5;
+          const halfW = wPx * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(-halfW, -3);
+          ctx.lineTo(4, -3);
+          ctx.moveTo(-4, 3);
+          ctx.lineTo(halfW, 3);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
     });
     ctx.restore();
   }
