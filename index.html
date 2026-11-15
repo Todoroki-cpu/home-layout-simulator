@@ -86,11 +86,20 @@
         </div>
 
         <div class="prop-group">
-          <label class="prop-label">寸法 (幅 × 奥行 × 高さ mm)</label>
-          <div class="prop-row">
-            <input type="number" id="prop-width" class="prop-input" title="幅 W" step="10" />
-            <input type="number" id="prop-depth" class="prop-input" title="奥行 D" step="10" />
-            <input type="number" id="prop-height" class="prop-input" title="高さ H" step="10" />
+          <label class="prop-label">寸法 (mm)</label>
+          <div class="dim-inputs-grid">
+            <div class="dim-field">
+              <span class="dim-tag">幅 W</span>
+              <input type="number" id="prop-width" class="prop-input dim-input" step="10" placeholder="幅" />
+            </div>
+            <div class="dim-field">
+              <span class="dim-tag">奥行 D</span>
+              <input type="number" id="prop-depth" class="prop-input dim-input" step="10" placeholder="奥行" />
+            </div>
+            <div class="dim-field">
+              <span class="dim-tag">高さ H</span>
+              <input type="number" id="prop-height" class="prop-input dim-input" step="10" placeholder="高さ" />
+            </div>
           </div>
         </div>
 
