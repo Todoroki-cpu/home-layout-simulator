@@ -121,7 +121,7 @@
     <main id="main-workspace" class="workspace-layout mode-split">
 
       <!-- 2D 平面図ビューポート (家具配置コア画面) -->
-      <div class="viewport-2d">
+      <div class="viewport-2d" id="viewport-2d">
         <div class="viewport-header-badge">2D 間取り家具配置 (ドラッグで移動・回転)</div>
         <canvas id="canvas-2d"></canvas>
 
@@ -139,8 +139,13 @@
         </div>
       </div>
 
+      <!-- 2D / 3D 横幅リサイズスプリッターバー -->
+      <div id="split-gutter" class="split-gutter" title="左右にドラッグして2D/3Dの横幅比率を変更（ダブルクリックで50:50にリセット）">
+        <div class="gutter-handle"></div>
+      </div>
+
       <!-- 3D ビューポート (Three.jsレンダラー) -->
-      <div class="viewport-3d">
+      <div class="viewport-3d" id="viewport-3d">
         <div class="viewport-header-badge">3D リアルタイム立体ビュー (ドラッグで回転・ズーム)</div>
         <div id="container-3d"></div>
       </div>

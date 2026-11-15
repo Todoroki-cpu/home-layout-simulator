@@ -362,6 +362,7 @@ body {
 
 /* Main Workspace */
 .workspace-layout {
+  --split-ratio: 50%;
   flex: 1;
   display: flex;
   width: 100%;
@@ -378,11 +379,52 @@ body {
 
 /* Layout Modes */
 .workspace-layout.mode-split .viewport-2d {
-  width: 50%;
-  border-right: 2px solid var(--border);
+  width: var(--split-ratio);
+  min-width: 220px;
+  max-width: calc(100% - 220px);
 }
 .workspace-layout.mode-split .viewport-3d {
-  width: 50%;
+  flex: 1;
+  min-width: 220px;
+}
+
+/* Split Gutter (Resizer Bar) */
+.split-gutter {
+  width: 12px;
+  background-color: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.split-gutter:hover, .split-gutter.dragging {
+  background-color: var(--primary);
+  border-color: var(--accent);
+}
+
+.gutter-handle {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  background-color: #64748b;
+  pointer-events: none;
+  transition: background-color 0.15s;
+}
+
+.split-gutter:hover .gutter-handle, .split-gutter.dragging .gutter-handle {
+  background-color: #ffffff;
+}
+
+.workspace-layout.mode-2d .split-gutter,
+.workspace-layout.mode-3d .split-gutter {
+  display: none;
 }
 
 .workspace-layout.mode-2d .viewport-2d {

@@ -38,10 +38,13 @@ class App {
     // 4. カメラプリセットUIの生成
     this.renderCameraPresets();
 
-    // 5. イベントリスナー登録
+    // 5. スプリッター（2D/3D横幅リサイザー）初期化
+    this.initSplitter();
+
+    // 6. イベントリスナー登録
     this.bindEvents();
 
-    // 6. 保存データの読込、または初期おすすめ配置の適用
+    // 7. 保存データの読込、または初期おすすめ配置の適用
     const saved = localStorage.getItem("home_layout_simulator_data");
     if (saved) {
       try {
@@ -366,6 +369,79 @@ class App {
     });
     document.getElementById("btn-close-gallery").addEventListener("click", () => {
       modal.classList.add("hidden");
+    });
+  }
+
+  /**
+   * 2D / 3D 領域の横幅リサイザー（スプリッター）の制御
+   */
+  initSplitter() {
+    const gutter = document.getElementById("split-gutter");
+    const workspace = document.getElementById("main-workspace");
+    if (!gutter || !workspace) return;
+
+    // 前回の比率を復元（デフォルト 50%）
+    const savedRatio = localStorage.getItem("home_layout_split_ratio");
+    let currentRatio = savedRatio ? parseFloat(savedRatio) : 50;
+    if (isNaN(currentRatio) || currentRatio < 15 || currentRatio > 85) currentRatio = 50;
+    workspace.style.setProperty("--split-ratio", `${currentRatio}%`);
+
+    let isDragging = false;
+
+    const onPointerDown = (e) => {
+      // mode-split の時のみドラッグ有効
+      if (!workspace.classList.contains("mode-split")) return;
+      isDragging = true;
+      gutter.classList.add("dragging");
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      e.preventDefault();
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const rect = workspace.getBoundingClientRect();
+      if (rect.width <= 0) return;
+
+      let pct = ((clientX - rect.left) / rect.width) * 100;
+      // 最小15%〜最大85%に制限
+      pct = Math.max(15, Math.min(85, pct));
+      currentRatio = Math.round(pct * 10) / 10;
+
+      workspace.style.setProperty("--split-ratio", `${currentRatio}%`);
+      this.canvas2d.resize();
+      this.scene3d.resize();
+    };
+
+    const onPointerUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      gutter.classList.remove("dragging");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      localStorage.setItem("home_layout_split_ratio", currentRatio);
+      this.canvas2d.resize();
+      this.scene3d.resize();
+    };
+
+    // マウスイベント
+    gutter.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("mousemove", onPointerMove);
+    window.addEventListener("mouseup", onPointerUp);
+
+    // タッチイベント (モバイル・タブレット)
+    gutter.addEventListener("touchstart", onPointerDown, { passive: false });
+    window.addEventListener("touchmove", onPointerMove, { passive: false });
+    window.addEventListener("touchend", onPointerUp);
+
+    // ダブルクリックで 50:50 にリセット
+    gutter.addEventListener("dblclick", () => {
+      currentRatio = 50;
+      workspace.style.setProperty("--split-ratio", "50%");
+      localStorage.setItem("home_layout_split_ratio", 50);
+      this.canvas2d.resize();
+      this.scene3d.resize();
     });
   }
 }
